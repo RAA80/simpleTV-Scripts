@@ -1,4 +1,6 @@
 -- script for 360tv.ru (10/04/2022)
+-- https://github.com/RAA80/simpleTV-Scripts
+
 -- example: https://360tv.ru/air/live/
 -- example: https://360tv.ru/air/news/
 
