@@ -18,7 +18,7 @@ if not string.match(inAdr, '//sber%-zvuk%.com/(.+)') and
 m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
 
-local proxy = ''    -- proxy: 'http://proxy-nossl.antizapret.prostovpn.org:29976'
+local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
 local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/79.0.2785.143 Safari/537.36', proxy, false)
 if session == nil then return end
 
