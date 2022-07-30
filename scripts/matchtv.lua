@@ -34,7 +34,7 @@ local function _send_request(session, address, header)
 end
 
 local answer = _send_request(session, inAdr, nil)
-local url = string.match(answer, '<div class="video%-player.-src="([^"]+)')
+local url = string.match(answer, 'data%-video%-player%-events%-target="iframe".-src="(.-)"')
 
 local answer = _send_request(session, url, 'Referer: ' .. url)
 local url = string.match(answer, 'data%-config%="config%=(.-)"')
