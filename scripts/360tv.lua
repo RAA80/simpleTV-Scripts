@@ -1,7 +1,7 @@
--- script for 360tv.ru (10/04/2022)
+-- script for 360tv.ru (05/09/2022)
 -- https://github.com/RAA80/simpleTV-Scripts
 
--- example: https://360tv.ru/air/live/
+-- example: https://360tv.ru/air/
 -- example: https://360tv.ru/air/news/
 
 
@@ -16,29 +16,37 @@ m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
 
 local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
-local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/79.0.2785.143 Safari/537.36', proxy, false)
+local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0', proxy, false)
 if session == nil then return end
 
-m_simpleTV.Http.SetTimeout(session, 20000)
+m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-local function _send_request(session, address)
-    local err, answer = m_simpleTV.Http.Request(session, {url=address})
-    if err ~= 200 then
-        m_simpleTV.Http.Close(session)
-        m_simpleTV.OSD.ShowMessage("Connection error: " .. err, 255, 3)
-        return
-    end
+json = require "rxijson"
 
-    return answer
+local rc, answer = m_simpleTV.Http.Request(session, {url=inAdr})
+if rc ~= 200 then
+    m_simpleTV.Http.Close(session)
+    m_simpleTV.OSD.ShowMessage("Connection error: " .. rc, 255, 3)
+    return
 end
 
-local answer = _send_request(session, inAdr)
-local url = string.match(answer, "src='(.-)'")
+local data = string.match(answer, 'type="application/json">(.-)</script>')
+local tab = json.decode(data)
 
-local answer = _send_request(session, url)
-local url = string.match(answer, 'var src = "(.-)";')
+local url = ""
+if string.match(inAdr, '/news') then
+    url = tab.props.pageProps.live.airtabs[1].m3u8
+else
+    local url1 = tab.props.pageProps.live.airtabs[1].m3u8
+    local host1 = string.match(url1, "https://(.-)/")
+
+    local url2 = tab.props.pageProps.live.airtabs[2].m3u8
+    local param2 = string.match(url2, "https://.-/(.+)")
+
+    url = "https://" .. host1 .. "/" .. param2
+end
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentAddress = url
