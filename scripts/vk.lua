@@ -2,7 +2,7 @@
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://vk.com/video68015256_456239307
--- example: https://vk.com/video-27327576_456243771
+-- example: https://vk.com/video-24136539_456239830
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end

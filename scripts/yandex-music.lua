@@ -1,4 +1,4 @@
--- script for music.yandex.com (30/07/2022)
+-- script for music.yandex.com (23/09/2022)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://music.yandex.com/track/36213788
@@ -18,7 +18,7 @@ m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
 
 local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
-local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/79.0.2785.143 Safari/537.36', proxy, false)
+local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0', proxy, false)
 if session == nil then return end
 
 m_simpleTV.Http.SetTimeout(session, 10000)
@@ -70,11 +70,7 @@ local function _send_request(session, address, header)
 end
 
 local function _get_track(track_id)
-    local token = 'Authorization: OAuth ' .. 'AgAAAAAYLxRXAAG8XicUsn4Rw0Cyu29SHjX1ACQ'
-    local header = 'X-Yandex-Music-Device: os=Windows.Desktop; os_version=10.0.18363.900; manufacturer=; model=; clid=WindowsPhone; device_id=F9097954387B9F5FD27181D082846AD0326798705EDAE779F26E8F0FA12512D80C070D77; uuid=generated-by-music-f4d8c305-b89c-47ac-a81b-b7f1d94b89ca\n' ..
-                   'X-Yandex-Music-Client: WindowsPhone/4.15\n' ..
-                   'User-Agent: Windows 10\n' ..
-                   'Accept-Language: ru\n' .. token
+    local header = 'Authorization: OAuth ' .. 'AgAAAAAYLxRXAAG8XicUsn4Rw0Cyu29SHjX1ACQ'
 
     local address = 'https://api.music.yandex.net/tracks/' .. track_id .. '/download-info'
     local answer = _send_request(session, address, header)
