@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (12/06/2022)
+-- script for sber-zvuk.com (15/10/2022)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -65,27 +65,19 @@ local function _get_album(js_data)
     return album
 end
 
-local function _generate_table(_table, table_name, table_type, length)
+local function _get_discography(table_type)
+    local _table = {}
+
     for i=1, #table_type, 1 do
-        _table[i+length] = {}
-        _table[i+length].Id = i + length
-        _table[i+length].Name = table_name .. table_type[i].title .. " (" .. table_type[i].releaseYear .. ")"
-        _table[i+length].Address = table_type[i].id
+        _table[i] = {}
+        _table[i].Id = i
+        _table[i].Name = table_type[i].type .. ": " .. table_type[i].title .. " (" .. table_type[i].releaseYear .. ")"
+        _table[i].Address = table_type[i].id
 
         i = i + 1
     end
 
     return _table
-end
-
-local function _get_discography(js_data)
-    local discography = {}
-
-    discography = _generate_table(discography, "Albums: ", js_data.props.pageProps.artist.album, #discography)
-    discography = _generate_table(discography, "Singles: ", js_data.props.pageProps.artist.single, #discography)
-    discography = _generate_table(discography, "Compilations: ", js_data.props.pageProps.artist.compilation, #discography)
-
-    return discography
 end
 
 
@@ -118,11 +110,11 @@ elseif string.match(inAdr, 'artist') then
     local js_data = json.decode(data)
 
     if m_simpleTV.Control.MainMode == 0 then
-        local poster = string.gsub(js_data.props.pageProps.artist.image.src, "{size}", "200x200") or ""
+        local poster = string.gsub(js_data.props.pageProps.data.image.src, "{size}", "200x200") or ""
         m_simpleTV.Control.ChangeChannelLogo(poster, m_simpleTV.Control.ChannelID, 'CHANGE_IF_NOT_EQUAL')
     end
 
-    local discography = _get_discography(js_data)
+    local discography = _get_discography(js_data.props.pageProps.data.additionalData.releases)
 
     local _, id = m_simpleTV.OSD.ShowSelect_UTF8(title, 0, discography, 10000, 1)
     if not id then id = 1 end

@@ -1,7 +1,9 @@
--- script for matchtv.ru (10/09/2022)
+-- script for matchtv.ru (30/09/2022)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://matchtv.ru/on-air
+-- example: https://matchtv.ru/channel/matchtv
+-- example: https://matchtv.ru/channel/strana
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -9,7 +11,7 @@ if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
 local inAdr = m_simpleTV.Control.CurrentAddress
 if inAdr == nil then return end
 
-if not string.match(inAdr, '//matchtv%.ru/on%-air') then return end
+if not string.match(inAdr, '//matchtv%.ru/') then return end
 
 m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
