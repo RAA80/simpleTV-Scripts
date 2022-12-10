@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (15/10/2022)
+-- script for sber-zvuk.com (16/10/2022)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -66,6 +66,16 @@ local function _get_album(js_data)
 end
 
 local function _get_discography(table_type)
+    local function mySort(a, b)     -- сортировка по типу и по году
+        if a.type < b.type then
+            return true
+        elseif a.type == b.type and a.releaseYear < b.releaseYear then
+            return true
+        end
+        return false
+    end
+    table.sort(table_type, mySort)
+
     local _table = {}
 
     for i=1, #table_type, 1 do

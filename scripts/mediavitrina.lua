@@ -1,4 +1,4 @@
--- script for mediavitrina.ru (05/08/2022)
+-- script for mediavitrina.ru (10/12/2022)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://player.mediavitrina.ru/rentv/rentv_web/player.html
@@ -40,6 +40,7 @@ local url = string.match(answer, "api: {.-sources: {.-url: '(.-)'")
 url = string.gsub(url, '{{APPLICATION_ID}}', "")
 url = string.gsub(url, '{{PLAYER_REFERER_HOSTNAME}}', "mediavitrina.ru")
 url = string.gsub(url, '{{CONFIG_CHECKSUM_SHA256}}', "")
+url = string.gsub(url, '/v3/', "/v1/")
 
 local answer = _send_request(session, url)
 local data = json.decode(answer)
