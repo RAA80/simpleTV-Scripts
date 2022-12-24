@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (16/10/2022)
+-- script for sber-zvuk.com (24/12/2022)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -66,18 +66,10 @@ local function _get_album(js_data)
 end
 
 local function _get_discography(table_type)
-    local function mySort(a, b)     -- сортировка по типу и по году
-        if a.type < b.type then
-            return true
-        elseif a.type == b.type and a.releaseYear < b.releaseYear then
-            return true
-        end
-        return false
-    end
-    table.sort(table_type, mySort)
+    table.sort(table_type, function(a, b)   -- сортировка по типу и по году
+        return (a.type < b.type) or (a.type == b.type and a.releaseYear < b.releaseYear) end)
 
     local _table = {}
-
     for i=1, #table_type, 1 do
         _table[i] = {}
         _table[i].Id = i
@@ -98,9 +90,10 @@ if string.match(inAdr, 'track') or string.match(inAdr, 'release') or string.matc
     local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
     local js_data = json.decode(data)
 
-    if string.match(inAdr, 'track') then js_data = {js_data.props.pageProps.track} end
-    if string.match(inAdr, 'release') then js_data = js_data.props.pageProps.release.tracks end
-    if string.match(inAdr, 'playlist') then js_data = js_data.props.pageProps.playlist.tracks end
+    if string.match(inAdr, 'track') then js_data = {js_data.props.pageProps.track}
+    elseif string.match(inAdr, 'release') then js_data = js_data.props.pageProps.release.tracks
+    elseif string.match(inAdr, 'playlist') then js_data = js_data.props.pageProps.playlist.tracks
+    end
 
     local album = _get_album(js_data)
 
