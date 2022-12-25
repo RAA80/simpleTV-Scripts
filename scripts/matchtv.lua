@@ -1,4 +1,4 @@
--- script for matchtv.ru (30/09/2022)
+-- script for matchtv.ru (25/12/2022)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://matchtv.ru/on-air
@@ -35,17 +35,15 @@ local function _send_request(session, address)
     return answer
 end
 
-local answer = _send_request(session, inAdr)
-local url = string.match(answer, '<div class="video%-player.-src="([^"]+)')
-
-local answer = _send_request(session, url)
-local url = string.match(answer, '"config%=(.-)"')
-
-local answer = _send_request(session, url)
-local url = string.match(answer, '<video_hd><!%[CDATA%[(.-)%]%]')
-
-local answer = _send_request(session, url)
-local url = string.match(answer, '<track .-><!%[CDATA%[(.-)%]%]></track>')
+local url = inAdr
+for _, expr in ipairs({'<div class="video%-player.-src="([^"]+)',
+                       '"config%=(.-)"',
+                       '<video_hd><!%[CDATA%[(.-)%]%]',
+                       '<track .-><!%[CDATA%[(.-)%]%]></track>'
+                     }) do
+    local answer = _send_request(session, url)
+    url = string.match(answer, expr)
+end
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentAddress = url
