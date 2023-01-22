@@ -1,4 +1,4 @@
--- script for music.yandex.com (23/09/2022)
+-- script for music.yandex.com (21/01/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://music.yandex.com/track/36213788
@@ -66,19 +66,17 @@ local function _send_request(session, address, header)
         return
     end
 
-    return answer
+    return json.decode(answer)
 end
 
 local function _get_track(track_id)
-    local header = 'Authorization: OAuth ' .. 'AgAAAAAYLxRXAAG8XicUsn4Rw0Cyu29SHjX1ACQ'
+    local header = 'Authorization: OAuth AgAAAAAYLxRXAAG8XicUsn4Rw0Cyu29SHjX1ACQ'
 
     local address = 'https://api.music.yandex.net/tracks/' .. track_id .. '/download-info'
-    local answer = _send_request(session, address, header)
-    local track = json.decode(answer)
+    local track = _send_request(session, address, header)
 
     local address = track.result[1].downloadInfoUrl .. '&format=json'
-    local answer = _send_request(session, address, header)
-    local track = json.decode(answer)
+    local track = _send_request(session, address, header)
 
     local str = 'XGRlBW9FXlekgbPrRHuSiA' .. string.sub(track.path, 2) .. track.s
     local hash = m_simpleTV.Common.CryptographicHash(str, "Md5", true)
@@ -93,8 +91,6 @@ local function _get_album(_table)
         album[i].Id = i
         album[i].Name = _get_artist(_table[i]) .. " - " .. _get_title(_table[i])
         album[i].Address = _get_track(_table[i].id)
-
-        i = i + 1
     end
 
     return album
@@ -109,8 +105,6 @@ local function _get_discography(_table)
         discography[i].Id = i
         discography[i].Name = _get_year(_table[i]) .. _get_artist(_table[i]) .. " - " .. _get_title(_table[i])
         discography[i].Address = _table[i].id
-
-        i = i + 1
     end
 
     return discography
@@ -123,11 +117,22 @@ local function _get_playlist(_table)
         playlist[i].Id = i
         playlist[i].Name = _get_artist(_table[i].track) .. ' - ' .. _get_title(_table[i].track)
         playlist[i].Address = _get_track(_table[i].track.id)
-
-        i = i + 1
     end
 
     return playlist
+end
+
+local function _set_panel_logo(url)
+    if m_simpleTV.Control.MainMode == 0 then
+        m_simpleTV.Control.ChangeChannelLogo(_get_cover(url), m_simpleTV.Control.ChannelID, 'CHANGE_IF_NOT_EQUAL')
+    end
+end
+
+local function _show_select(name, list, mode)
+    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, list, 10000, mode)
+    if not id then id = 1 end
+
+    return list[id].Name, list[id].Address
 end
 
 
@@ -135,65 +140,41 @@ local url = ""
 local title = ""
 
 if string.match(inAdr, '/track/%d+$') then
-    local track_id = string.match(inAdr, 'track/(%d+)')
-    url = _get_track(track_id)
+    local id = string.match(inAdr, 'track/(%d+)')
+    url = _get_track(id)
 
 elseif string.match(inAdr, '/album/%d+$') then
-    local album_id = string.match(inAdr, 'album/(%d+)')
-    local address = "https://api.music.yandex.net/albums/" .. album_id .. "/with-tracks"
-    local answer = _send_request(session, address, "")
-    local js_data = json.decode(answer)
+    local id = string.match(inAdr, 'album/(%d+)')
+    local address = "https://api.music.yandex.net/albums/" .. id .. "/with-tracks"
+    local tab = _send_request(session, address, "")
+    local name = _get_artist(tab.result) .. " - " .. _get_title(tab.result) .. _get_year(tab.result)
+    local list = _get_album(tab.result.volumes[1])
 
-    local name = _get_artist(js_data.result) .. " - " .. _get_title(js_data.result) .. _get_year(js_data.result)
-    local album = _get_album(js_data.result.volumes[1])
-
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, album, 10000, 0)
-    if not id then id = 1 end
-
-    if m_simpleTV.Control.MainMode == 0 then
-        m_simpleTV.Control.ChangeChannelLogo(_get_cover(js_data.result), m_simpleTV.Control.ChannelID)
-    end
-
-    title = album[id].Name
-    url = album[id].Address
+    _set_panel_logo(tab.result)
+    title, url = _show_select(name, list, 0)
 
 elseif string.match(inAdr, '/artist/%d+$') or string.match(inAdr, '/artist/%d+/albums$') then
-    local artist_id = string.match(inAdr, 'artist/(%d+)')
-    local address = "https://api.music.yandex.net/artists/" .. artist_id .. "/direct-albums?page=0&page-size=100"
-    local answer = _send_request(session, address, "")
-    local js_data = json.decode(answer)
+    local id = string.match(inAdr, 'artist/(%d+)')
+    local address = "https://api.music.yandex.net/artists/" .. id .. "/direct-albums?page=0&page-size=100"
+    local tab = _send_request(session, address, "")
+    local name = "Discography"
+    local list = _get_discography(tab.result.albums)
 
-    if m_simpleTV.Control.MainMode == 0 then
-        m_simpleTV.Control.ChangeChannelLogo(_get_cover(js_data.result.albums[1].artists[1]),
-                                             m_simpleTV.Control.ChannelID, 'CHANGE_IF_NOT_EQUAL')
-    end
+    _set_panel_logo(tab.result.albums[1].artists[1])
+    local _, album_id = _show_select(name, list, 1)
 
-    local discography = _get_discography(js_data.result.albums)
-
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8("Discography", 0, discography, 10000, 1)
-    if not id then id = 1 end
-
-    m_simpleTV.Control.PlayAddressT({address="https://music.yandex.com/album/" .. discography[id].Address})
+    m_simpleTV.Control.PlayAddressT({address="https://music.yandex.com/album/" .. album_id})
 
 elseif string.match(inAdr, '/users/.-/playlists/%d+$') then
-    local user_id = string.match(inAdr, '/users/(.-)/')
     local playlist_id = string.match(inAdr, '/playlists/(%d+)')
-    local address = 'https://api.music.yandex.net/users/' .. user_id .. '/playlists/' .. playlist_id
-    local answer = _send_request(session, address, "")
-    local js_data = json.decode(answer)
+    local id = string.match(inAdr, '/users/(.-)/')
+    local address = 'https://api.music.yandex.net/users/' .. id .. '/playlists/' .. playlist_id
+    local tab = _send_request(session, address, "")
+    local name = tab.result.title
+    local list = _get_playlist(tab.result.tracks)
 
-    local name = js_data.result.title
-    local playlist = _get_playlist(js_data.result.tracks)
-
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, playlist, 10000, 0)
-    if not id then id = 1 end
-
-    if m_simpleTV.Control.MainMode == 0 then
-        m_simpleTV.Control.ChangeChannelLogo(_get_cover(js_data.result), m_simpleTV.Control.ChannelID)
-    end
-
-    title = playlist[id].Name
-    url = playlist[id].Address
+    _set_panel_logo(tab.result)
+    title, url = _show_select(name, list, 0)
 
 end
 

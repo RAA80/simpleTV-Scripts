@@ -47,5 +47,4 @@ local data = json.decode(answer)
 url = data.hls[1] or data.mpd[1]
 
 m_simpleTV.Http.Close(session)
-m_simpleTV.Control.CurrentTitle_UTF8 = nil
 m_simpleTV.Control.CurrentAddress = url

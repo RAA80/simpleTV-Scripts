@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (24/12/2022)
+-- script for sber-zvuk.com (21/01/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -22,7 +22,7 @@ local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
 local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/79.0.2785.143 Safari/537.36', proxy, false)
 if session == nil then return end
 
-m_simpleTV.Http.SetTimeout(session, 30000)
+m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
@@ -48,81 +48,72 @@ local function _get_track(track_id)
     return track.result.stream
 end
 
-local function _get_album(js_data)
+local function _get_album(_table)
     local album = {}
-    for i=1, #js_data, 1 do
+    for i=1, #_table, 1 do
         album[i] = {}
         album[i].Id = i
-        album[i].Name = js_data[i].artist_names[1] .. " - " .. js_data[i].title
-        album[i].Address = _get_track(js_data[i].id) .. '$OPT:no-gnutls-system-trust'
+        album[i].Name = _table[i].artist_names[1] .. " - " .. _table[i].title
+        album[i].Address = _get_track(_table[i].id) .. '$OPT:no-gnutls-system-trust'
 
-        m_simpleTV.OSD.ShowMessage("Read " .. i .. " of " .. #js_data .. " tracks", 255, 2)
-        i = i + 1
-
+        m_simpleTV.OSD.ShowMessage("Read " .. i .. " of " .. #_table .. " tracks", 255, 2)
         m_simpleTV.Common.Sleep(5000)
     end
 
     return album
 end
 
-local function _get_discography(table_type)
-    table.sort(table_type, function(a, b)   -- сортировка по типу и по году
+local function _get_discography(_table)
+    table.sort(_table, function(a, b)   -- сортировка по типу и по году
         return (a.type < b.type) or (a.type == b.type and a.releaseYear < b.releaseYear) end)
 
-    local _table = {}
-    for i=1, #table_type, 1 do
-        _table[i] = {}
-        _table[i].Id = i
-        _table[i].Name = table_type[i].type .. ": " .. table_type[i].title .. " (" .. table_type[i].releaseYear .. ")"
-        _table[i].Address = table_type[i].id
-
-        i = i + 1
+    local discography = {}
+    for i=1, #_table, 1 do
+        discography[i] = {}
+        discography[i].Id = i
+        discography[i].Name = _table[i].type .. ": " .. _table[i].title .. " (" .. _table[i].releaseYear .. ")"
+        discography[i].Address = _table[i].id
     end
 
-    return _table
+    return discography
+end
+
+local function _set_panel_logo(url)
+    if m_simpleTV.Control.MainMode == 0 then
+        local cover = string.gsub(url, "{size}", "200x200") or ""
+        m_simpleTV.Control.ChangeChannelLogo(cover, m_simpleTV.Control.ChannelID, 'CHANGE_IF_NOT_EQUAL')
+    end
+end
+
+local function _show_select(name, list, mode)
+    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, list, 10000, mode)
+    if not id then id = 1 end
+
+    return list[id].Name, list[id].Address
 end
 
 
 local answer = _send_request(session, inAdr)
 local title = string.match(answer, '"og:title" content="(.-)"/>')
+local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
+local tab = json.decode(data)
 
 if string.match(inAdr, 'track') or string.match(inAdr, 'release') or string.match(inAdr, 'playlist') then
-    local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
-    local js_data = json.decode(data)
-
-    if string.match(inAdr, 'track') then js_data = {js_data.props.pageProps.track}
-    elseif string.match(inAdr, 'release') then js_data = js_data.props.pageProps.release.tracks
-    elseif string.match(inAdr, 'playlist') then js_data = js_data.props.pageProps.playlist.tracks
+    if string.match(inAdr, 'track') then tab = {tab.props.pageProps.track}
+    elseif string.match(inAdr, 'release') then tab = tab.props.pageProps.release.tracks
+    elseif string.match(inAdr, 'playlist') then tab = tab.props.pageProps.playlist.tracks
     end
 
-    local album = _get_album(js_data)
-
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(title, 0, album, 10000, 0)
-    if not id then id = 1 end
-
-    if m_simpleTV.Control.MainMode == 0 then
-        local cover = string.gsub(js_data[1].image.src, "{size}", "200x200") or ""
-        m_simpleTV.Control.ChangeChannelLogo(cover, m_simpleTV.Control.ChannelID)
-    end
-
-    url = album[id].Address
-    title = album[id].Name
+    local list = _get_album(tab)
+    _set_panel_logo(tab[1].image.src)
+    title, url = _show_select(title, list, 0)
 
 elseif string.match(inAdr, 'artist') then
-    local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
-    local js_data = json.decode(data)
+    local list = _get_discography(tab.props.pageProps.data.additionalData.releases)
+    _set_panel_logo(tab.props.pageProps.data.image.src)
+    local _, album_id = _show_select(title, list, 1)
 
-    if m_simpleTV.Control.MainMode == 0 then
-        local poster = string.gsub(js_data.props.pageProps.data.image.src, "{size}", "200x200") or ""
-        m_simpleTV.Control.ChangeChannelLogo(poster, m_simpleTV.Control.ChannelID, 'CHANGE_IF_NOT_EQUAL')
-    end
-
-    local discography = _get_discography(js_data.props.pageProps.data.additionalData.releases)
-
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(title, 0, discography, 10000, 1)
-    if not id then id = 1 end
-
-    m_simpleTV.Control.PlayAddressT({address="https://sber-zvuk.com/release/" .. discography[id].Address})
+    m_simpleTV.Control.PlayAddressT({address="https://sber-zvuk.com/release/" .. album_id})
 
 end
 
