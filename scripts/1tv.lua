@@ -1,4 +1,4 @@
--- script for 1tv.ru (05/09/2022)
+-- script for 1tv.ru (21/01/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://www.1tv.ru/live
@@ -32,15 +32,11 @@ local function _send_request(session, address)
         return
     end
 
-    return answer
+    return json.decode(answer)
 end
 
-local answer = _send_request(session, "http://stream.1tv.ru/api/playlist/1tvch_as_array.json")
-local data = json.decode(answer)
-
-local answer = _send_request(session, "http://stream.1tv.ru/get_hls_session")
-local tab = json.decode(answer)
-
+local data = _send_request(session, "http://stream.1tv.ru/api/playlist/1tvch_as_array.json")
+local tab = _send_request(session, "http://stream.1tv.ru/get_hls_session")
 local url = data.hls[1] .. '&s=' .. tab.s or data.mpd[1]
 
 m_simpleTV.Http.Close(session)
