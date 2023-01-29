@@ -45,9 +45,9 @@ if rc ~= 200 then
 end
 
 local data = json.decode(answer)
-
 local url = data.payload[2][5].player.params[1].hls
 local title = data.payload[2][5].player.params[1].md_title
+
 title = m_simpleTV.Common.multiByteToUTF8(title)
 title = htmlEntities.decode(title)
 

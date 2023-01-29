@@ -1,10 +1,12 @@
--- script for sber-zvuk.com (21/01/2023)
+-- script for sber-zvuk.com (25/01/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
 -- example: https://sber-zvuk.com/release/10264599
 -- example: https://sber-zvuk.com/artist/521621
 -- example: https://sber-zvuk.com/playlist/7222566
+-- example: https://sber-zvuk.com/episode/90195375
+-- example: https://sber-zvuk.com/podcast/20762002
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -98,10 +100,13 @@ local title = string.match(answer, '"og:title" content="(.-)"/>')
 local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
 local tab = json.decode(data)
 
-if string.match(inAdr, 'track') or string.match(inAdr, 'release') or string.match(inAdr, 'playlist') then
+if string.match(inAdr, 'track') or string.match(inAdr, 'release') or string.match(inAdr, 'playlist') or
+   string.match(inAdr, 'episode') or string.match(inAdr, 'podcast') then
     if string.match(inAdr, 'track') then tab = {tab.props.pageProps.track}
     elseif string.match(inAdr, 'release') then tab = tab.props.pageProps.release.tracks
     elseif string.match(inAdr, 'playlist') then tab = tab.props.pageProps.playlist.tracks
+    elseif string.match(inAdr, 'episode') then tab = {tab.props.pageProps.episode}
+    elseif string.match(inAdr, 'podcast') then tab = tab.props.pageProps.podcast.episodes
     end
 
     local list = _get_album(tab)

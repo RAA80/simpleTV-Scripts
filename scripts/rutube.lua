@@ -36,7 +36,6 @@ if rc ~= 200 then
 end
 
 local data = json.decode(answer)
-
 local title = data.title
 local url = data.video_balancer.m3u8 or data.live_streams.hls[1].url
 

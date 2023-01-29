@@ -44,10 +44,9 @@ if string.match(inAdr, "player%.vgtrk%.com/iframe/video/") then
     answer = _send_request(session, 'https:' .. dataUrl)
 end
 
-local jsdata = json.decode(answer)
-
-local title = jsdata.data.playlist.medialist[1].title
-local url = jsdata.data.playlist.medialist[1].sources.m3u8.auto
+local tab = json.decode(answer)
+local title = tab.data.playlist.medialist[1].title
+local url = tab.data.playlist.medialist[1].sources.m3u8.auto
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentTitle_UTF8 = title
