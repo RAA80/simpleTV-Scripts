@@ -1,4 +1,4 @@
--- script for 360tv.ru (05/09/2022)
+-- script for 360tv.ru (04/02/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://360tv.ru/air/
@@ -25,6 +25,18 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 json = require "rxijson"
 
+
+local function _get_url(tab, id1, id2)
+    local url1 = tab[id1].m3u8
+    local host = string.match(url1, "https://(.-)/")
+
+    local url2 = tab[id2].m3u8
+    local param = string.match(url2, "https://.-/(.+)")
+
+    return "https://" .. host .. "/" .. param
+end
+
+
 local rc, answer = m_simpleTV.Http.Request(session, {url=inAdr})
 if rc ~= 200 then
     m_simpleTV.Http.Close(session)
@@ -37,15 +49,9 @@ local tab = json.decode(data)
 
 local url = ""
 if string.match(inAdr, '/news') then
-    url = tab.props.pageProps.live.airtabs[1].m3u8
+    url = _get_url(tab.props.pageProps.live.airtabs, 2, 1)
 else
-    local url1 = tab.props.pageProps.live.airtabs[1].m3u8
-    local host1 = string.match(url1, "https://(.-)/")
-
-    local url2 = tab.props.pageProps.live.airtabs[2].m3u8
-    local param2 = string.match(url2, "https://.-/(.+)")
-
-    url = "https://" .. host1 .. "/" .. param2
+    url = _get_url(tab.props.pageProps.live.airtabs, 1, 2)
 end
 
 m_simpleTV.Http.Close(session)

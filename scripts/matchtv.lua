@@ -1,4 +1,4 @@
--- script for matchtv.ru (25/12/2022)
+-- script for matchtv.ru (04/02/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://matchtv.ru/on-air
@@ -38,7 +38,7 @@ end
 local url = inAdr
 for _, expr in ipairs({'<div class="video%-player.-src="([^"]+)',
                        '"config%=(.-)"',
-                       '<video_hd><!%[CDATA%[(.-)%]%]',
+                       '<video><!%[CDATA%[(.-)%]%]',
                        '<track .-><!%[CDATA%[(.-)%]%]></track>'
                      }) do
     local answer = _send_request(session, url)
