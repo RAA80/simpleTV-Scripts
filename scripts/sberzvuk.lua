@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (25/01/2023)
+-- script for sber-zvuk.com (12/02/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -21,7 +21,7 @@ m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
 
 local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
-local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/79.0.2785.143 Safari/537.36', proxy, false)
+local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; rv:103.0) Gecko/20100101 Firefox/103.0', proxy, false)
 if session == nil then return end
 
 m_simpleTV.Http.SetTimeout(session, 10000)
@@ -31,8 +31,8 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 json = require "rxijson"
 
 
-local function _send_request(session, address)
-    local rc, answer = m_simpleTV.Http.Request(session, {url=address})
+local function _send_request(session, method, address, body, header)
+    local rc, answer = m_simpleTV.Http.Request(session, {method=method, url=address, body=body, headers=header})
     if rc ~= 200 then
         m_simpleTV.Http.Close(session)
         m_simpleTV.OSD.ShowMessage("Connection error: " .. rc, 255, 3)
@@ -43,11 +43,14 @@ local function _send_request(session, address)
 end
 
 local function _get_track(track_id)
-    local address = "https://sber-zvuk.com/api/tiny/track/stream?id=" .. track_id .. "&quality=high"
-    local answer = _send_request(session, address)
+    local address = 'https://zvuk.com/api/v1/graphql'
+    local body = '{"operationName":"getStream","variables":{"isFlacDRM":false,"ids":[' .. track_id .. ']},"query":"query getStream($ids: [ID!]!, $isFlacDRM: Boolean = false) {\\n  mediaContents(ids: $ids) {\\n    ... on Track {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n        flacdrm @include(if: $isFlacDRM)\\n      }\\n    }\\n    ... on Episode {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n    ... on Chapter {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n  }\\n}\\n"}'
+    local header = 'content-type: application/json\n' ..
+                   'x-auth-token: Ks8yROyDDwZZN1rqrmqzRc3xiVRw4wPj'
+    local answer = _send_request(session, 'post', address, body, header)
     local track = json.decode(answer)
 
-    return track.result.stream
+    return track.data.mediaContents[1].stream.mid
 end
 
 local function _get_album(_table)
@@ -66,7 +69,7 @@ local function _get_album(_table)
 end
 
 local function _get_discography(_table)
-    table.sort(_table, function(a, b)   -- сортировка по типу и по году
+    table.sort(_table, function(a, b)   -- сортировка по типу и по году выпуска
         return (a.type < b.type) or (a.type == b.type and a.releaseYear < b.releaseYear) end)
 
     local discography = {}
@@ -95,7 +98,7 @@ local function _show_select(name, list, mode)
 end
 
 
-local answer = _send_request(session, inAdr)
+local answer = _send_request(session, 'get', inAdr, nil, nil)
 local title = string.match(answer, '"og:title" content="(.-)"/>')
 local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
 local tab = json.decode(data)
