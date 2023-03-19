@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (12/02/2023)
+-- script for sber-zvuk.com (19/03/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -42,11 +42,19 @@ local function _send_request(session, method, address, body, header)
     return answer
 end
 
-local function _get_track(track_id)
+local function _get_token()
+    local address = 'https://zvuk.com/api/tiny/profile'
+    local answer = _send_request(session, 'get', address, nil, nil)
+    local tab = json.decode(answer)
+
+    return tab.result.token
+end
+
+local function _get_track(track_id, token)
     local address = 'https://zvuk.com/api/v1/graphql'
     local body = '{"operationName":"getStream","variables":{"isFlacDRM":false,"ids":[' .. track_id .. ']},"query":"query getStream($ids: [ID!]!, $isFlacDRM: Boolean = false) {\\n  mediaContents(ids: $ids) {\\n    ... on Track {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n        flacdrm @include(if: $isFlacDRM)\\n      }\\n    }\\n    ... on Episode {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n    ... on Chapter {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n  }\\n}\\n"}'
     local header = 'content-type: application/json\n' ..
-                   'x-auth-token: Ks8yROyDDwZZN1rqrmqzRc3xiVRw4wPj'
+                   'x-auth-token: ' .. token
     local answer = _send_request(session, 'post', address, body, header)
     local track = json.decode(answer)
 
@@ -54,15 +62,17 @@ local function _get_track(track_id)
 end
 
 local function _get_album(_table)
+    local token = _get_token()
+
     local album = {}
     for i=1, #_table, 1 do
         album[i] = {}
         album[i].Id = i
         album[i].Name = _table[i].artist_names[1] .. " - " .. _table[i].title
-        album[i].Address = _get_track(_table[i].id) .. '$OPT:no-gnutls-system-trust'
+        album[i].Address = _get_track(_table[i].id, token) .. '$OPT:no-gnutls-system-trust'
 
         m_simpleTV.OSD.ShowMessage("Read " .. i .. " of " .. #_table .. " tracks", 255, 2)
-        m_simpleTV.Common.Sleep(5000)
+        --m_simpleTV.Common.Sleep(5000)
     end
 
     return album
