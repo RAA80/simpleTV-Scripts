@@ -1,4 +1,4 @@
--- script for music.yandex.com (21/01/2023)
+-- script for music.yandex.com (17/04/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://music.yandex.com/track/36213788
@@ -12,13 +12,13 @@ if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
 local inAdr = m_simpleTV.Control.CurrentAddress
 if inAdr == nil then return end
 
-if not string.match(inAdr, 'music%.yandex%.com/(.+)') then return end
+if not string.match(inAdr, '//music%.yandex%.com/(.+)') then return end
 
 m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
 
 local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
-local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0', proxy, false)
+local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; rv:103.0) Gecko/20100101 Firefox/103.0', proxy, false)
 if session == nil then return end
 
 m_simpleTV.Http.SetTimeout(session, 10000)
@@ -50,10 +50,8 @@ local function _get_title(_table)
 end
 
 local function _get_cover(_table)
-    local cover = ""
-    if _table.coverUri ~= nil then cover = _table.coverUri or ""
-    elseif _table.cover ~= nil then cover = _table.cover.uri or ""
-    end
+    local cover = _table.coverUri ~= nil and _table.coverUri or
+                  _table.cover ~= nil and _table.cover.uri or ""
 
     return string.gsub('http://' .. cover, "[%%]+", "200x200") or ""
 end
