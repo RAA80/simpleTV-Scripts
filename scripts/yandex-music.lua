@@ -1,4 +1,4 @@
--- script for music.yandex.com (22/04/2023)
+-- script for music.yandex.com (30/04/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://music.yandex.com/track/36213788
@@ -34,15 +34,12 @@ local function _get_year(_table)
 end
 
 local function _get_artist(_table)
-    local artists = ""
+    local artists = {}
     for i=1, #_table.artists, 1 do
-        artists = artists .. _table.artists[i].name
-        if i>=1 and i<#_table.artists then
-            artists = artists .. ", "
-        end
+        table.insert(artists, _table.artists[i].name)
     end
 
-    return artists
+    return table.concat(artists, ", ")
 end
 
 local function _get_title(_table)
