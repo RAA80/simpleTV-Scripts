@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (19/03/2023)
+-- script for sber-zvuk.com (30/05/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -102,9 +102,7 @@ end
 
 local function _show_select(name, list, mode)
     local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, list, 10000, mode)
-    if not id then id = 1 end
-
-    return list[id].Name, list[id].Address
+    return list[id or 1].Name, list[id or 1].Address
 end
 
 
