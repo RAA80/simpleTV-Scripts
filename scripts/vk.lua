@@ -1,4 +1,4 @@
--- script for vk.com (27/06/2022)
+-- script for vk.com (11/06/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://vk.com/video68015256_456239307
@@ -10,7 +10,9 @@ if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
 local inAdr = m_simpleTV.Control.CurrentAddress
 if inAdr == nil then return end
 
-if not string.match(inAdr, '//vk%.com/(.+)') and
+if not string.match(inAdr, '//vk%.ru/(.+)') and
+   not string.match(inAdr, '//m%.vk%.ru/(.+)') and
+   not string.match(inAdr, '//vk%.com/(.+)') and
    not string.match(inAdr, '//m%.vk%.com/(.+)') then return end
 
 m_simpleTV.Control.ChangeAddress = 'Yes'
@@ -45,7 +47,8 @@ if rc ~= 200 then
 end
 
 local data = json.decode(answer)
-local url = data.payload[2][5].player.params[1].hls
+local url = data.payload[2][5].player.params[1].hls or
+            data.payload[2][5].player.params[1].hls_ondemand
 local title = data.payload[2][5].player.params[1].md_title
 
 title = m_simpleTV.Common.multiByteToUTF8(title)
