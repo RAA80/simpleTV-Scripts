@@ -1,4 +1,4 @@
--- script for mediavitrina.ru (10/12/2022)
+-- script for mediavitrina.ru (26/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://player.mediavitrina.ru/rentv/rentv_web/player.html
@@ -22,7 +22,7 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-json = require "rxijson"
+local json = require "rxijson"
 
 local function _send_request(session, address)
     local err, answer = m_simpleTV.Http.Request(session, {url=address})

@@ -1,4 +1,4 @@
--- script for 360tv.ru (04/02/2023)
+-- script for 360tv.ru (26/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://360tv.ru/air/
@@ -23,7 +23,7 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-json = require "rxijson"
+local json = require "rxijson"
 
 
 local function _get_url(tab, id1, id2)

@@ -1,4 +1,4 @@
--- script for music.yandex.com (30/05/2023)
+-- script for music.yandex.com (26/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://music.yandex.com/track/36213788
@@ -26,7 +26,7 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-json = require "rxijson"
+local json = require "rxijson"
 
 
 local function _get_year(_table)
@@ -50,7 +50,6 @@ end
 local function _get_cover(_table)
     local cover = _table.coverUri ~= nil and _table.coverUri or
                   _table.cover ~= nil and _table.cover.uri or ""
-
     return string.gsub('http://' .. cover, "[%%]+", "200x200") or ""
 end
 
@@ -128,62 +127,55 @@ local function _set_panel_logo(url)
     end
 end
 
-local function _show_select(name, list, mode)
+local function _show_select(url, name, list, mode)
+    _set_panel_logo(url)
     local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, list, 10000, mode)
+
     return list[id or 1].Name, list[id or 1].Address
 end
 
+local function _get_page(pattern, str1, str2)
+    local id1, id2 = string.match(inAdr, pattern)
+    local address = "https://api.music.yandex.net/" .. str1 .. id1 .. str2 .. (id2 or "")
 
-local url = ""
-local title = ""
+    return _send_request(session, address, "")
+end
+
+local function _redirect_url(name, _table)
+    local list = _get_discography(_table.result.albums)
+    local _, album_id = _show_select(_table.result.albums[1].artists[1], name, list, 1)
+
+    m_simpleTV.Control.PlayAddressT({address="https://music.yandex.com/album/" .. album_id})
+end
+
+
+local url, title
 
 if string.match(inAdr, '/track/%d+$') then
     local id = string.match(inAdr, 'track/(%d+)')
     url = _get_track(id)
 
 elseif string.match(inAdr, '/album/%d+$') then
-    local id = string.match(inAdr, 'album/(%d+)')
-    local address = "https://api.music.yandex.net/albums/" .. id .. "/with-tracks"
-    local tab = _send_request(session, address, "")
+    local tab = _get_page('album/(%d+)', "albums/", "/with-tracks")
     local name = _get_artist(tab.result) .. " - " .. _get_title(tab.result) .. _get_year(tab.result)
     local list = _get_album(tab.result.volumes)
 
-    _set_panel_logo(tab.result)
-    title, url = _show_select(name, list, 0)
-
-elseif string.match(inAdr, '/artist/%d+$') or string.match(inAdr, '/artist/%d+/albums$') then
-    local id = string.match(inAdr, 'artist/(%d+)')
-    local address = "https://api.music.yandex.net/artists/" .. id .. "/direct-albums?page=0&page-size=100"
-    local tab = _send_request(session, address, "")
-    local name = "Discography"
-    local list = _get_discography(tab.result.albums)
-
-    _set_panel_logo(tab.result.albums[1].artists[1])
-    local _, album_id = _show_select(name, list, 1)
-
-    m_simpleTV.Control.PlayAddressT({address="https://music.yandex.com/album/" .. album_id})
+    title, url = _show_select(tab.result, name, list, 0)
 
 elseif string.match(inAdr, '/users/.-/playlists/%d+$') then
-    local user_id, id = string.match(inAdr, '/users/(.-)/playlists/(%d+)')
-    local address = 'https://api.music.yandex.net/users/' .. user_id .. '/playlists/' .. id
-    local tab = _send_request(session, address, "")
+    local tab = _get_page('/users/(.-)/playlists/(%d+)', "users/", "/playlists/")
     local name = tab.result.title
     local list = _get_playlist(tab.result.tracks)
 
-    _set_panel_logo(tab.result)
-    title, url = _show_select(name, list, 0)
+    title, url = _show_select(tab.result, name, list, 0)
+
+elseif string.match(inAdr, '/artist/%d+$') or string.match(inAdr, '/artist/%d+/albums$') then
+    local tab = _get_page('artist/(%d+)', "artists/", "/direct-albums")
+    return _redirect_url("Discography", tab)
 
 elseif string.match(inAdr, '/label/%d+$') then
-    local id = string.match(inAdr, 'label/(%d+)')
-    local address = "https://api.music.yandex.net/labels/" .. id .."/albums"
-    local tab = _send_request(session, address, "")
-    local name = "Label"
-    local list = _get_discography(tab.result.albums)
-
-    _set_panel_logo(tab.result.albums[1].artists[1])
-    local _, album_id = _show_select(name, list, 1)
-
-    m_simpleTV.Control.PlayAddressT({address="https://music.yandex.com/album/" .. album_id})
+    local tab = _get_page('label/(%d+)', "labels/", "/albums")
+    return _redirect_url("Label", tab)
 
 end
 

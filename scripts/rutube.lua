@@ -1,4 +1,4 @@
--- script for rutube.ru (18/06/2022)
+-- script for rutube.ru (26/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://rutube.ru/video/8f2e3228f08c876518ac7d58e883d2c1/
@@ -23,7 +23,7 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-json = require "rxijson"
+local json = require "rxijson"
 
 local id = string.match(inAdr, '/video/(%w+)')
 inAdr = "http://rutube.ru/api/play/options/" .. id

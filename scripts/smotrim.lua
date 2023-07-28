@@ -1,4 +1,4 @@
--- script for smotrim.ru (11/06/2023)
+-- script for smotrim.ru (26/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://smotrim.ru/channel/1
@@ -25,7 +25,7 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-json = require "rxijson"
+local json = require "rxijson"
 
 
 local function _send_request(session, address)

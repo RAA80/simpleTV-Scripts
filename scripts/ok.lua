@@ -1,4 +1,4 @@
--- script for ok.ru (26/06/2022)
+-- script for ok.ru (26/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://ok.ru/video/23276948199
@@ -23,8 +23,8 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-json = require "rxijson"
-htmlEntities = require 'htmlEntities'
+local json = require "rxijson"
+local htmlEntities = require 'htmlEntities'
 
 local rc, answer = m_simpleTV.Http.Request(session, {url=inAdr})
 if rc ~= 200 then

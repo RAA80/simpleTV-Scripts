@@ -1,4 +1,4 @@
--- script for vk.com (11/06/2023)
+-- script for vk.com (26/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://vk.com/video68015256_456239307
@@ -26,9 +26,10 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-json = require "rxijson"
-htmlEntities = require 'htmlEntities'
+local json = require "rxijson"
+local htmlEntities = require 'htmlEntities'
 
+inAdr = string.gsub(inAdr, '&id=', '_')
 local video_id = string.match(inAdr, '[%a=](%-?%d+_%d+)') or ''
 local list_id = string.match(inAdr, 'list=([^&]+)') or ''
 local playlist_id = string.match(inAdr, '/playlist/(%-?%d+_%d+)') or ''

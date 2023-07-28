@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (30/05/2023)
+-- script for sber-zvuk.com (26/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -28,7 +28,7 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 ---------------------------------------------------------------------------
 
-json = require "rxijson"
+local json = require "rxijson"
 
 
 local function _send_request(session, method, address, body, header)
