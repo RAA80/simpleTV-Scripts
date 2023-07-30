@@ -1,4 +1,4 @@
--- script for music.yandex.com (26/07/2023)
+-- script for music.yandex.com (29/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://music.yandex.com/track/36213788
@@ -30,7 +30,7 @@ local json = require "rxijson"
 
 
 local function _get_year(_table)
-    return _table.year ~= nil and " (" .. _table.year .. ") " or ""     -- аналог a==b ? true : false
+    return _table.year and " (" .. _table.year .. ") " or ""
 end
 
 local function _get_artist(_table)
@@ -43,13 +43,12 @@ local function _get_artist(_table)
 end
 
 local function _get_title(_table)
-    local version = _table.version ~= nil and " (" .. _table.version .. ")" or ""
+    local version = _table.version and " (" .. _table.version .. ")" or ""
     return _table.title .. version
 end
 
 local function _get_cover(_table)
-    local cover = _table.coverUri ~= nil and _table.coverUri or
-                  _table.cover ~= nil and _table.cover.uri or ""
+    local cover = _table.coverUri or _table.cover and _table.cover.uri or ""
     return string.gsub('http://' .. cover, "[%%]+", "200x200") or ""
 end
 
@@ -96,8 +95,6 @@ local function _get_album(_table)
 end
 
 local function _get_discography(_table)
-    table.sort(_table, function(a, b) if a.year and b.year then return a.year < b.year end
-               end)
     local discography = {}
     for i=1, #_table, 1 do
         discography[i] = {}
@@ -170,11 +167,11 @@ elseif string.match(inAdr, '/users/.-/playlists/%d+$') then
     title, url = _show_select(tab.result, name, list, 0)
 
 elseif string.match(inAdr, '/artist/%d+$') or string.match(inAdr, '/artist/%d+/albums$') then
-    local tab = _get_page('artist/(%d+)', "artists/", "/direct-albums")
+    local tab = _get_page('artist/(%d+)', "artists/", "/direct-albums?sort_by=year")
     return _redirect_url("Discography", tab)
 
-elseif string.match(inAdr, '/label/%d+$') then
-    local tab = _get_page('label/(%d+)', "labels/", "/albums")
+elseif string.match(inAdr, '/label/%d+$') or string.match(inAdr, '/label/%d+/albums$') then
+    local tab = _get_page('label/(%d+)', "labels/", "/albums?sort_by=year")
     return _redirect_url("Label", tab)
 
 end
