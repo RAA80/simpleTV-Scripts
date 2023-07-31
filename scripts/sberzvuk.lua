@@ -1,12 +1,12 @@
 -- script for sber-zvuk.com (30/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
--- example: https://sber-zvuk.com/track/66985389
--- example: https://sber-zvuk.com/release/10264599
--- example: https://sber-zvuk.com/artist/521621
--- example: https://sber-zvuk.com/playlist/7222566
--- example: https://sber-zvuk.com/episode/90195375
--- example: https://sber-zvuk.com/podcast/20762002
+-- example: https://zvuk.com/track/66985389
+-- example: https://zvuk.com/release/10264599
+-- example: https://zvuk.com/artist/521621
+-- example: https://zvuk.com/playlist/7222566
+-- example: https://zvuk.com/episode/90195375
+-- example: https://zvuk.com/podcast/20762002
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -72,22 +72,22 @@ local function _get_album(_table)
         album[i].Address = _get_track(_table[i].id, token) .. '$OPT:no-gnutls-system-trust'
 
         m_simpleTV.OSD.ShowMessage("Read " .. i .. " of " .. #_table .. " tracks", 255, 2)
-        --m_simpleTV.Common.Sleep(5000)
     end
 
     return album
 end
 
 local function _get_discography(_table)
-    table.sort(_table, function(a, b)   -- сортировка по типу и по году выпуска
-        return (a.type < b.type) or (a.type == b.type and a.releaseYear < b.releaseYear) end)
-
     local discography = {}
+    local index = 1
     for i=1, #_table, 1 do
-        discography[i] = {}
-        discography[i].Id = i
-        discography[i].Name = _table[i].type .. ": " .. _table[i].title .. " (" .. _table[i].releaseYear .. ")"
-        discography[i].Address = _table[i].id
+        for j=1, #_table[i].releases, 1 do
+            discography[index] = {}
+            discography[index].Id = index
+            discography[index].Name = _table[i].releases[j].type .. ": " .. _table[i].releases[j].title .. " (" .. _table[i].releases[j].releaseYear .. ")"
+            discography[index].Address = _table[i].releases[j].id
+            index = index + 1
+        end
     end
 
     return discography
@@ -108,13 +108,17 @@ local function _show_select(url, name, list, mode)
 end
 
 
+if string.match(inAdr, 'artist/(%d+)$') then
+    inAdr = inAdr .. '/releases'
+end
+
 local answer = _send_request(session, 'get', inAdr, nil, nil)
-local title = string.match(answer, '"og:title" content="(.-)"/>')
+local url, title
 local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
 local tab = json.decode(data)
 
-if string.match(inAdr, 'track') or string.match(inAdr, 'release') or string.match(inAdr, 'playlist') or
-   string.match(inAdr, 'episode') or string.match(inAdr, 'podcast') then
+if string.match(inAdr, 'track/(%d+)$') or string.match(inAdr, 'release/(%d+)$') or string.match(inAdr, 'playlist/(%d+)$') or
+   string.match(inAdr, 'episode/(%d+)$') or string.match(inAdr, 'podcast/(%d+)$') then
     if string.match(inAdr, 'track') then tab = {tab.props.pageProps.track}
     elseif string.match(inAdr, 'release') then tab = tab.props.pageProps.release.tracks
     elseif string.match(inAdr, 'playlist') then tab = tab.props.pageProps.playlist.tracks
@@ -122,14 +126,19 @@ if string.match(inAdr, 'track') or string.match(inAdr, 'release') or string.matc
     elseif string.match(inAdr, 'podcast') then tab = tab.props.pageProps.podcast.episodes
     end
 
+    local logo = tab[1].image.src
+    local name = tab[1].release_title or tab[1].podcast_title
     local list = _get_album(tab)
-    title, url = _show_select(tab[1].image.src, title, list, 0)
+    title, url = _show_select(logo, name, list, 0)
 
-elseif string.match(inAdr, 'artist') then
-    local list = _get_discography(tab.props.pageProps.data.additionalData.releases)
-    local _, album_id = _show_select(tab.props.pageProps.data.image.src, title, list, 1)
+elseif string.match(inAdr, 'artist/(%d+)/releases$') then
+    local logo = tab.props.pageProps.artistMeta.image.src
+    local name = tab.props.pageProps.artistMeta.title
+    local list = _get_discography(tab.props.pageProps.releaseBlocks)
+    local _, album_id = _show_select(logo, name, list, 1)
 
-    m_simpleTV.Control.PlayAddressT({address="https://sber-zvuk.com/release/" .. album_id})
+    m_simpleTV.Control.PlayAddressT({address="https://zvuk.com/release/" .. album_id})
+    return
 
 end
 
