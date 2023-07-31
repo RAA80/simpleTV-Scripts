@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (26/07/2023)
+-- script for sber-zvuk.com (30/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://sber-zvuk.com/track/66985389
@@ -100,8 +100,10 @@ local function _set_panel_logo(url)
     end
 end
 
-local function _show_select(name, list, mode)
+local function _show_select(url, name, list, mode)
+    _set_panel_logo(url)
     local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, list, 10000, mode)
+
     return list[id or 1].Name, list[id or 1].Address
 end
 
@@ -121,13 +123,11 @@ if string.match(inAdr, 'track') or string.match(inAdr, 'release') or string.matc
     end
 
     local list = _get_album(tab)
-    _set_panel_logo(tab[1].image.src)
-    title, url = _show_select(title, list, 0)
+    title, url = _show_select(tab[1].image.src, title, list, 0)
 
 elseif string.match(inAdr, 'artist') then
     local list = _get_discography(tab.props.pageProps.data.additionalData.releases)
-    _set_panel_logo(tab.props.pageProps.data.image.src)
-    local _, album_id = _show_select(title, list, 1)
+    local _, album_id = _show_select(tab.props.pageProps.data.image.src, title, list, 1)
 
     m_simpleTV.Control.PlayAddressT({address="https://sber-zvuk.com/release/" .. album_id})
 

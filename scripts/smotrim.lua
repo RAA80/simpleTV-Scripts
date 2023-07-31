@@ -1,4 +1,4 @@
--- script for smotrim.ru (26/07/2023)
+-- script for smotrim.ru (30/07/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://smotrim.ru/channel/1
@@ -39,51 +39,41 @@ local function _send_request(session, address)
     return answer
 end
 
+local function _get_page(pattern, str1, str2)
+    local id1, id2 = string.match(inAdr, pattern)
+    local address = str1 .. id1 .. str2 .. (id2 or "")
+    local answer = _send_request(session, address)
+
+    return json.decode(answer)
+end
+
 
 local url, title
 
 if string.match(inAdr, '//smotrim.ru/channel/') then
     local answer = _send_request(session, inAdr)
-    local embedUrl = string.match(answer, '"embedUrl": "(.-)"')
-    if string.match(embedUrl, 'mediavitrina') then
-        m_simpleTV.Control.PlayAddressT({address=embedUrl})
+    inAdr = string.match(answer, '"embedUrl": "(.-)"')
+    if string.match(inAdr, 'mediavitrina') then
+        m_simpleTV.Control.PlayAddressT({address=inAdr})
         return
     end
 
-    local id, sid = string.match(embedUrl, '/id/(.-)/.+/sid/(.-)/')
-    embedUrl = "https://player2.smotrim.ru/iframe/datalive/id/" .. id .. "/sid/" .. sid
-
-    local answer = _send_request(session, embedUrl)
-    local tab = json.decode(answer)
+    local tab = _get_page('/id/(.-)/.+/sid/(.-)/', 'https://player.smotrim.ru/iframe/datalive/id/', '/sid/')
     title = tab.data.playlist.medialist[1].title
     url = tab.data.playlist.medialist[1].sources.m3u8.auto
 
 elseif string.match(inAdr, '//smotrim.ru/video/') then
-    local answer = _send_request(session, inAdr)
-    local embedUrl = string.match(answer, '"embedUrl": "(.-)"')
-
-    local id, sid = string.match(embedUrl, '/id/(.-)/sid/(.-)/')
-    embedUrl = "https://player2.smotrim.ru/iframe/datavideo/id/" .. id .. "/sid/" .. sid
-
-    local answer = _send_request(session, embedUrl)
-    local tab = json.decode(answer)
+    local tab = _get_page('video/(%d+)', 'https://player.smotrim.ru/iframe/datavideo/id/', '/sid/smotrim')
     title = tab.data.playlist.medialist[1].title
     url = tab.data.playlist.medialist[1].sources.m3u8.auto
 
 elseif string.match(inAdr, '//smotrim.ru/audio/') then
-    local id = string.match(inAdr, 'audio/(%d+)')
-    local embedUrl = 'https://player.smotrim.ru/iframe/audio/id/' .. id .. '/sid/smotrim'
-
-    local answer = _send_request(session, embedUrl)
-    title = string.match(answer, '<title>(.-)</title>')
-    url = string.match(answer, "window%.pl%.audio_url .-= '(.-)'")
+    local tab = _get_page('audio/(%d+)', 'https://player.smotrim.ru/iframe/dataaudio/id/', '/sid/smotrim')
+    title = tab.data.playlist.medialist[1].title
+    url = tab.data.playlist.medialist[1].audio_url
 
 elseif string.match(inAdr, '//smotrim.ru/podcast/') then
-    local podcast_id = string.match(inAdr, '/podcast/(%d+)')
-    local embedUrl = 'https://api.smotrim.ru/api/v1/audios/?includes=anons:datePub:duration:episodeTitle:rubrics:title&limit=1000&plan=free,free&sort=date&rubrics=' .. podcast_id
-
-    local answer = _send_request(session, embedUrl)
-    local tab = json.decode(answer)
+    local tab = _get_page('/podcast/(%d+)', 'https://api.smotrim.ru/api/v1/audios?limit=1000&plan=free,free&sort=date&rubrics=', '')
 
     local podcast = {}
     for i=1, #tab.data, 1 do
@@ -94,9 +84,8 @@ elseif string.match(inAdr, '//smotrim.ru/podcast/') then
     end
 
     local _, id = m_simpleTV.OSD.ShowSelect_UTF8("podcast", 0, podcast, 10000, 1)
-    if not id then id = 1 end
-
-    m_simpleTV.Control.PlayAddressT({address=podcast[id].Address})
+    m_simpleTV.Control.PlayAddressT({address=podcast[id or 1].Address})
+    return
 
 end
 
