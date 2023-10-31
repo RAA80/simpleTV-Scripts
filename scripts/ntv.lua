@@ -1,11 +1,11 @@
--- script for ntv.ru (28/10/2023)
+-- script for ntv.ru (31/10/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
--- example: https://www.ntv.ru/air/ntv/
--- example: https://www.ntv.ru/air/ntvlaw/
--- example: https://www.ntv.ru/air/ntvseries/
--- example: https://www.ntv.ru/air/ntvstyle/
--- example: https://www.ntv.ru/air/unknown_russia/
+-- example: https://www.ntv.ru/air/ntv
+-- example: https://www.ntv.ru/air/ntvlaw
+-- example: https://www.ntv.ru/air/ntvseries
+-- example: https://www.ntv.ru/air/ntvstyle
+-- example: https://www.ntv.ru/air/unknown_russia
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -36,19 +36,8 @@ if err ~= 200 then
 end
 
 local tab = json.decode(answer)
-local url
-
-if string.match(inAdr, '/ntvstyle/') then
-    url = tab.data.channels[1].src
-elseif string.match(inAdr, '/ntvseries/') then
-    url = tab.data.channels[2].src
-elseif string.match(inAdr, '/ntvlaw/') then
-    url = tab.data.channels[3].src
-elseif string.match(inAdr, '/ntv/') then
-    url = tab.data.channels[4].src
-elseif string.match(inAdr, '/unknown_russia/') then
-    url = tab.data.channels[5].src
-end
+local t = {['ntvstyle']=1, ['ntvseries']=2, ['ntvlaw']=3, ['ntv']=4, ['unknown_russia']=5}
+local chn = string.match(inAdr, "air/(.-)$")
 
 m_simpleTV.Http.Close(session)
-m_simpleTV.Control.CurrentAddress = url
+m_simpleTV.Control.CurrentAddress = tab.data.channels[t[chn]].src
