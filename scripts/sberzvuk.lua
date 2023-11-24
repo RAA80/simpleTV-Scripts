@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (04/11/2023)
+-- script for sber-zvuk.com (13/11/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://zvuk.com/track/66985389
@@ -127,32 +127,32 @@ local url, title
 local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
 local tab = json.decode(data)
 
-if string.match(inAdr, 'track/(%d+)$') or string.match(inAdr, 'release/(%d+)$') or
-   string.match(inAdr, 'playlist/(%d+)$') or string.match(inAdr, 'episode/(%d+)$') or
-   string.match(inAdr, 'podcast/(%d+)$') or string.match(inAdr, 'abook/(%d+)') then
-    if string.match(inAdr, 'track') then tab = {tab.props.pageProps.track}
-    elseif string.match(inAdr, 'release') then tab = tab.props.pageProps.release.tracks
-    elseif string.match(inAdr, 'playlist') then tab = tab.props.pageProps.playlist.tracks
-    elseif string.match(inAdr, 'episode') then tab = {tab.props.pageProps.episode}
-    elseif string.match(inAdr, 'podcast') then tab = tab.props.pageProps.podcast.episodes
-    elseif string.match(inAdr, 'abook') then tab = tab.props.pageProps.audioBook.chapters
-    end
+if string.match(inAdr, 'track/(%d+)$') then tab = {tab.props.pageProps.track}
+elseif string.match(inAdr, 'release/(%d+)$') then tab = tab.props.pageProps.release.tracks
+elseif string.match(inAdr, 'playlist/(%d+)$') then tab = tab.props.pageProps.playlist.tracks
+elseif string.match(inAdr, 'episode/(%d+)$') then tab = {tab.props.pageProps.episode}
+elseif string.match(inAdr, 'podcast/(%d+)$') then tab = tab.props.pageProps.podcast.episodes
+elseif string.match(inAdr, 'abook/(%d+)$') then tab = tab.props.pageProps.audioBook.chapters
+elseif string.match(inAdr, 'artist/(%d+)') then tab = tab.props.pageProps
+end
 
-    local logo = tab[1].image.src
-    local name = tab[1].release_title or tab[1].podcast_title or tab[1].origin.title
-    local list = _get_album(tab)
-    title, url = _show_select(logo, name, list, 0)
+local logo = tab[1] and tab[1].image and tab[1].image.src or
+             tab.artistMeta.image and tab.artistMeta.image.src
+local name = tab[1] and tab[1].release_title or
+             tab[1] and tab[1].podcast_title or
+             tab[1] and tab[1].origin.title or
+             tab.artistMeta and tab.artistMeta.title
 
-elseif string.match(inAdr, 'artist/(%d+)/releases$') then
-    local logo = tab.props.pageProps.artistMeta.image.src
-    local name = tab.props.pageProps.artistMeta.title
-    local list = _get_discography(tab.props.pageProps.releaseBlocks)
+if string.match(inAdr, 'artist') then
+    local list = _get_discography(tab.releaseBlocks)
     local _, album_id = _show_select(logo, name, list, 1)
 
     m_simpleTV.Control.PlayAddressT({address="https://zvuk.com/release/" .. album_id})
     return
-
 end
+
+local list = _get_album(tab)
+title, url = _show_select(logo, name, list, 0)
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentTitle_UTF8 = title

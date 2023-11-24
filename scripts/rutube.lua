@@ -1,8 +1,8 @@
--- script for rutube.ru (26/07/2023)
+-- script for rutube.ru (24/11/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
--- example: https://rutube.ru/video/8f2e3228f08c876518ac7d58e883d2c1/
--- example: https://rutube.ru/video/04fe060044923165b0450f526dc103b0/
+-- example: https://rutube.ru/video/a88448f3a273028b52f6d66bf5cc68fd/
+-- example: https://rutube.ru/video/c58f502c7bb34a8fcdd976b221fca292/
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
