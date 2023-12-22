@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (13/11/2023)
+-- script for sber-zvuk.com (22/12/2023)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://zvuk.com/track/66985389
@@ -89,15 +89,11 @@ end
 
 local function _get_discography(_table)
     local discography = {}
-    local index = 1
     for i=1, #_table, 1 do
-        for j=1, #_table[i].releases, 1 do
-            discography[index] = {}
-            discography[index].Id = index
-            discography[index].Name = _table[i].releases[j].type .. ": " .. _table[i].releases[j].title .. " (" .. _table[i].releases[j].releaseYear .. ")"
-            discography[index].Address = _table[i].releases[j].id
-            index = index + 1
-        end
+        discography[i] = {}
+        discography[i].Id = i
+        discography[i].Name = _table[i].type .. ": " .. _table[i].title
+        discography[i].Address = _table[i].id
     end
 
     return discography
@@ -125,6 +121,7 @@ end
 local answer = _send_request(session, 'get', inAdr, nil, nil)
 local url, title
 local data = string.match(answer, '<script id="__NEXT_DATA__".-({.-})</script>')
+
 local tab = json.decode(data)
 
 if string.match(inAdr, 'track/(%d+)$') then tab = {tab.props.pageProps.track}
@@ -133,18 +130,17 @@ elseif string.match(inAdr, 'playlist/(%d+)$') then tab = tab.props.pageProps.pla
 elseif string.match(inAdr, 'episode/(%d+)$') then tab = {tab.props.pageProps.episode}
 elseif string.match(inAdr, 'podcast/(%d+)$') then tab = tab.props.pageProps.podcast.episodes
 elseif string.match(inAdr, 'abook/(%d+)$') then tab = tab.props.pageProps.audioBook.chapters
-elseif string.match(inAdr, 'artist/(%d+)') then tab = tab.props.pageProps
+elseif string.match(inAdr, 'artist/(%d+)') then tab = {tab.props.pageProps.data}
 end
 
-local logo = tab[1] and tab[1].image and tab[1].image.src or
-             tab.artistMeta.image and tab.artistMeta.image.src
+local logo = tab[1].image.src
 local name = tab[1] and tab[1].release_title or
              tab[1] and tab[1].podcast_title or
-             tab[1] and tab[1].origin.title or
-             tab.artistMeta and tab.artistMeta.title
+             tab[1] and tab[1].origin and tab[1].origin.title or
+             tab[1] and tab[1].title
 
 if string.match(inAdr, 'artist') then
-    local list = _get_discography(tab.releaseBlocks)
+    local list = _get_discography(tab[1].discography.all.releases)
     local _, album_id = _show_select(logo, name, list, 1)
 
     m_simpleTV.Control.PlayAddressT({address="https://zvuk.com/release/" .. album_id})
