@@ -1,4 +1,4 @@
--- script for ok.ru (26/07/2023)
+-- script for ok.ru (11/05/2024)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://ok.ru/video/23276948199
@@ -40,7 +40,8 @@ local data = json.decode(str)
 local metadata = json.decode(data.flashvars.metadata)
 
 local title = metadata.movie.title
-local url = metadata.hlsManifestUrl or metadata.hlsMasterPlaylistUrl
+local url = metadata.hlsManifestUrl or metadata.hlsMasterPlaylistUrl or
+            metadata.videos[1] and metadata.videos[1].url
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentTitle_UTF8 = title

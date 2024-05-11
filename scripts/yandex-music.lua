@@ -1,4 +1,4 @@
--- script for music.yandex.com (29/07/2023)
+-- script for music.yandex.com (11/05/2024)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://music.yandex.com/track/36213788
@@ -75,7 +75,7 @@ local function _get_track(track_id)
     local str = 'XGRlBW9FXlekgbPrRHuSiA' .. string.sub(track.path, 2) .. track.s
     local hash = m_simpleTV.Common.CryptographicHash(str, "Md5", true)
 
-    return 'https://' .. track.host .. '/get-mp3/' .. hash .. '/' .. track.ts .. track.path
+    return 'https://' .. track.host .. '/get-mp3/' .. hash .. '/' .. track.ts .. track.path .. '$OPT:demux=mp4,any'
 end
 
 local function _get_album(_table)
