@@ -1,4 +1,4 @@
--- script for sber-zvuk.com (22/12/2023)
+-- script for sber-zvuk.com (22/06/2024)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://zvuk.com/track/66985389
@@ -25,7 +25,7 @@ local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
 local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; rv:103.0) Gecko/20100101 Firefox/103.0', proxy, false)
 if session == nil then return end
 
-m_simpleTV.Http.SetTimeout(session, 10000)
+m_simpleTV.Http.SetTimeout(session, 20000)
 
 ---------------------------------------------------------------------------
 
