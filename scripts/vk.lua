@@ -1,4 +1,4 @@
--- script for vk.com (26/07/2023)
+-- script for vk.com (05/08/2024)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://vk.com/video68015256_456239307
@@ -22,7 +22,7 @@ local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
 local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/79.0.2785.143 Safari/537.36', proxy, false)
 if session == nil then return end
 
-m_simpleTV.Http.SetTimeout(session, 10000)
+m_simpleTV.Http.SetTimeout(session, 20000)
 
 ---------------------------------------------------------------------------
 
@@ -49,6 +49,8 @@ end
 
 local data = json.decode(answer)
 local url = data.payload[2][5].player.params[1].hls or
+            data.payload[2][5].player.params[1].hls_live or
+            data.payload[2][5].player.params[1].hls_live_playback or
             data.payload[2][5].player.params[1].hls_ondemand
 local title = data.payload[2][5].player.params[1].md_title
 
