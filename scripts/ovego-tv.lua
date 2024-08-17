@@ -1,4 +1,4 @@
--- script for ovego.tv (05/07/2024)
+-- script for ovego.tv (10/08/2024)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: http://ovego.tv/publ/live_tv/razvlekatelnye/paramount_comedy/7-1-0-1188
@@ -56,7 +56,7 @@ local header = "Host: " .. host .. "\n" ..
 local answer = _send_request(session, src, header)
 
 local signature = string.match(answer, 'signature = "(.-)"') or ""
-local url = string.match(answer, 'file:"(.-)"')
+local url = string.match(answer, 'file:"(.-)[ "]')
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentAddress = url .. signature

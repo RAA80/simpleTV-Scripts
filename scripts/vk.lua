@@ -1,8 +1,8 @@
--- script for vk.com (05/08/2024)
+-- script for vk.com (17/08/2024)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://vk.com/video68015256_456239307
--- example: https://vk.com/video-24136539_456239830
+-- example: https://vk.com/video-6246566_456246663
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
