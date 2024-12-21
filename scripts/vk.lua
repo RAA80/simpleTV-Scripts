@@ -1,4 +1,4 @@
--- script for vk.com (17/08/2024)
+-- script for vk.com (21/12/2024)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://vk.com/video68015256_456239307
@@ -12,6 +12,7 @@ if inAdr == nil then return end
 
 if not string.match(inAdr, '//vk%.ru/(.+)') and
    not string.match(inAdr, '//m%.vk%.ru/(.+)') and
+   not string.match(inAdr, '//vkvideo%.ru/(.+)') and
    not string.match(inAdr, '//vk%.com/(.+)') and
    not string.match(inAdr, '//m%.vk%.com/(.+)') then return end
 
@@ -48,11 +49,13 @@ if rc ~= 200 then
 end
 
 local data = json.decode(answer)
-local url = data.payload[2][5].player.params[1].hls or
-            data.payload[2][5].player.params[1].hls_live or
-            data.payload[2][5].player.params[1].hls_live_playback or
-            data.payload[2][5].player.params[1].hls_ondemand
-local title = data.payload[2][5].player.params[1].md_title
+data = data.payload[2][5].player.params[1]
+local url = data.hls or
+            data.hls_live or
+            data.hls_live_playback or
+            data.hls_ondemand or
+            data.url144
+local title = data.md_title
 
 title = m_simpleTV.Common.multiByteToUTF8(title)
 title = htmlEntities.decode(title)
