@@ -1,4 +1,4 @@
--- script for vk.com (21/12/2024)
+-- script for vk.com (05/02/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://vk.com/video68015256_456239307
@@ -13,6 +13,7 @@ if inAdr == nil then return end
 if not string.match(inAdr, '//vk%.ru/(.+)') and
    not string.match(inAdr, '//m%.vk%.ru/(.+)') and
    not string.match(inAdr, '//vkvideo%.ru/(.+)') and
+   not string.match(inAdr, '//m.vkvideo%.ru/(.+)') and
    not string.match(inAdr, '//vk%.com/(.+)') and
    not string.match(inAdr, '//m%.vk%.com/(.+)') then return end
 

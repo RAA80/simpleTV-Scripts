@@ -1,8 +1,10 @@
--- script for ovego.tv (10/08/2024)
+-- script for ovego.tv (26/03/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: http://ovego.tv/publ/live_tv/razvlekatelnye/paramount_comedy/7-1-0-1188
 -- example: http://telik.live/fox.html
+-- example: http://telik.live/trash-tv.html
+-- example: http://smotret-tv.live/kinopokaz.html
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -11,6 +13,7 @@ local inAdr = m_simpleTV.Control.CurrentAddress
 if inAdr == nil then return end
 
 if not string.match(inAdr, 'ovego%.tv/(.+)') and
+   not string.match(inAdr, 'smotret%-tv%.live/(.+)') and
    not string.match(inAdr, 'telik%.live/(.+)') then return end
 
 m_simpleTV.Control.ChangeAddress = 'Yes'
@@ -56,7 +59,7 @@ local header = "Host: " .. host .. "\n" ..
 local answer = _send_request(session, src, header)
 
 local signature = string.match(answer, 'signature = "(.-)"') or ""
-local url = string.match(answer, 'file:"(.-)[ "]')
-
+local url = string.match(answer, 'file:"(.-)[ "]') or
+            string.match(answer, 'file=(.-)"')
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentAddress = url .. signature
