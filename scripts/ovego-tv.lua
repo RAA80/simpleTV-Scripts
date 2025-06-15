@@ -1,4 +1,4 @@
--- script for ovego.tv (26/03/2025)
+-- script for ovego.tv (15/06/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: http://ovego.tv/publ/live_tv/razvlekatelnye/paramount_comedy/7-1-0-1188
@@ -51,8 +51,8 @@ local answer = _send_request(session, inAdr, "")
 local src = src_url_extractor(answer)
 
 local referer = string.match(inAdr, "(http://.-)/")
-local host = string.match(src, "(http://.-)/")
-
+local host = string.match(src, "(http://.-)/") or
+             string.match(src, "(https://.-)/")
 local header = "Host: " .. host .. "\n" ..
                "Referer: " .. referer .. "\n" ..
                "Upgrade-Insecure-Requests: 1"
@@ -61,5 +61,12 @@ local answer = _send_request(session, src, header)
 local signature = string.match(answer, 'signature = "(.-)"') or ""
 local url = string.match(answer, 'file:"(.-)[ "]') or
             string.match(answer, 'file=(.-)"')
+
+url = string.gsub(url, " or ", " ")
+for part in string.gmatch(url, "([^" .. "%s+" .. "]+)") do
+    url = part
+    break
+end
+
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentAddress = url .. signature

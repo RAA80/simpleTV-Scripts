@@ -1,8 +1,8 @@
--- script for ok.ru (11/05/2024)
+-- script for ok.ru (15/06/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://ok.ru/video/23276948199
--- example: https://ok.ru/live/1061877194420
+-- example: https://ok.ru/live/73364
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
