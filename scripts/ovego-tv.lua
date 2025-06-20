@@ -1,4 +1,4 @@
--- script for ovego.tv (15/06/2025)
+-- script for ovego.tv (20/06/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: http://ovego.tv/publ/live_tv/razvlekatelnye/paramount_comedy/7-1-0-1188
@@ -50,7 +50,8 @@ end
 local answer = _send_request(session, inAdr, "")
 local src = src_url_extractor(answer)
 
-local referer = string.match(inAdr, "(http://.-)/")
+local referer = string.match(inAdr, "(http://.-)/") or
+                string.match(inAdr, "(https://.-)/")
 local host = string.match(src, "(http://.-)/") or
              string.match(src, "(https://.-)/")
 local header = "Host: " .. host .. "\n" ..
