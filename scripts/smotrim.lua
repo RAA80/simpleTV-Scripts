@@ -1,11 +1,11 @@
--- script for smotrim.ru (11/08/2023)
+-- script for smotrim.ru (16/07/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
--- example: https://smotrim.ru/brand/20305
+-- example: https://smotrim.ru/brand/16625
 -- example: https://smotrim.ru/video/158543
 -- example: https://smotrim.ru/podcast/9741
 -- example: https://smotrim.ru/audio/2714934
--- example: https://smotrim.ru/live/53520
+-- example: https://smotrim.ru/channel/1
 -- example: https://smotrim.ru/channel/270
 -- example: https://smotrim.ru/channel/248
 
@@ -96,11 +96,11 @@ elseif string.match(inAdr, 'audio/(%d+)') then
     title = tab.data.episodeTitle
 
 elseif string.match(inAdr, 'podcast/(%d+)') then
-    local tab = _get_page('podcast/(%d+)', 'https://api.smotrim.ru/api/v1/audios/rubrics/', '?limit=1000')
+    local tab = _get_page('podcast/(%d+)', 'https://api.smotrim.ru/api/v1/audios/rubrics/', '?limit=100')
     return _redirect_url('https://smotrim.ru/audio/', tab)
 
 elseif string.match(inAdr, 'brand/(%d+)') then
-    local tab = _get_page('brand/(%d+)', 'https://api.smotrim.ru/api/v1/videos/brands/', '?limit=1000')
+    local tab = _get_page('brand/(%d+)', 'https://api.smotrim.ru/api/v1/videos/brands/', '?limit=100')
     return _redirect_url('https://smotrim.ru/video/', tab)
 
 end
