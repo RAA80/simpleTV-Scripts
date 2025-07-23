@@ -1,4 +1,4 @@
--- script for zvuk.com (22/07/2025)
+-- script for zvuk.com (23/07/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://zvuk.com/track/66985389
@@ -64,7 +64,7 @@ local function _get_track(id, token)
                    'x-auth-token: ' .. token
     local tab = _send_request(session, 'post', address, body, header)
 
-    return tab.data.mediaContents[1].stream.mid
+    return tab.data.mediaContents[1].stream.mid .. '$OPT:no-gnutls-system-trust'
 end
 
 local function _get_album(id, token)
@@ -81,7 +81,7 @@ local function _get_album(id, token)
         album[i] = {}
         album[i].Id = i
         album[i].Name = _get_artist(tracks[tostring(_table[i])].artist_names) .. " - " .. tracks[tostring(_table[i])].title
-        album[i].Address = _get_track(_table[i], token) .. '$OPT:no-gnutls-system-trust'
+        album[i].Address = _get_track(_table[i], token)
     end
 
     return logo, name, album
@@ -101,7 +101,7 @@ local function _get_playlist(id, token)
         playlist[i] = {}
         playlist[i].Id = i
         playlist[i].Name = _get_artist(tracks[tostring(_table[i])].artist_names) .. " - " .. tracks[tostring(_table[i])].title
-        playlist[i].Address = _get_track(_table[i], token) .. '$OPT:no-gnutls-system-trust'
+        playlist[i].Address = _get_track(_table[i], token)
     end
 
     return logo, name, playlist
@@ -121,7 +121,7 @@ local function _get_podcast(id, token)
         podcast[i] = {}
         podcast[i].Id = i
         podcast[i].Name = _get_artist(tracks[tostring(_table[i])].author_names) .. " - " .. tracks[tostring(_table[i])].title
-        podcast[i].Address = _get_track(_table[i], token) .. '$OPT:no-gnutls-system-trust'
+        podcast[i].Address = _get_track(_table[i], token)
     end
 
     return logo, name, podcast
@@ -183,21 +183,25 @@ local token = _get_token()
 if string.match(inAdr, 'track/(%d+)$') or string.match(inAdr, 'episode/(%d+)$') then
     local id = string.match(inAdr, 'track/(%d+)$') or string.match(inAdr, 'episode/(%d+)$')
     url = _get_track(id, token)
+
 elseif string.match(inAdr, 'release/(%d+)$') then
     local id = string.match(inAdr, 'release/(%d+)$')
-    logo, name, album = _get_album(id, token)
+    local logo, name, album = _get_album(id, token)
     title, url = _show_select(logo, name, album, 0)
+
 elseif string.match(inAdr, 'playlist/(%d+)$') then
     local id = string.match(inAdr, 'playlist/(%d+)$')
-    logo, name, playlist = _get_playlist(id, token)
+    local logo, name, playlist = _get_playlist(id, token)
     title, url = _show_select(logo, name, playlist, 0)
+
 elseif string.match(inAdr, 'podcast/(%d+)$') then
     local id = string.match(inAdr, 'podcast/(%d+)$')
-    logo, name, podcast = _get_podcast(id, token)
+    local logo, name, podcast = _get_podcast(id, token)
     title, url = _show_select(logo, name, podcast, 0)
+
 elseif string.match(inAdr, 'artist/(%d+)$') then
     local id = string.match(inAdr, 'artist/(%d+)$')
-    logo, name, discography = _get_discography(id)
+    local logo, name, discography = _get_discography(id)
     title, url = _show_select(logo, name, discography, 1)
 
     m_simpleTV.Control.PlayAddressT({address=url})
