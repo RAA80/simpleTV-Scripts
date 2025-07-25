@@ -79,8 +79,8 @@ if string.match(inAdr, 'channel/(%d+)') then
         url = tab.data.playlist.medialist[1].source.auto
         title = tab.data.playlist.medialist[1].title
     elseif string.match(address, '/live/') then
-        uid = string.match(address, '/uid/(.-)/')
-        sid = string.match(address, '/sid/(.-)')
+        local uid = string.match(address, '/uid/(.-)/')
+        local sid = string.match(address, '/sid/(.-)')
         local tab = _get_page('channel/(%d+)', 'https://player.smotrim.ru/iframe/datalive/uid/' .. uid .. "/sid/" .. sid, '')
         url = tab.data.playlist.medialist[1].sources.m3u8.auto .. '$OPT:no-spu'
         title = tab.data.playlist.medialist[1].title
