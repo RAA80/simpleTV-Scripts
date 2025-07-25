@@ -1,4 +1,4 @@
--- script for smotrim.ru (16/07/2025)
+-- script for smotrim.ru (25/07/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://smotrim.ru/brand/16625
@@ -67,12 +67,7 @@ end
 
 local url, title
 
-if string.match(inAdr, 'live/(%d+)') then
-    local tab = _get_page('live/(%d+)', 'https://player.smotrim.ru/iframe/datalive/id/', '')
-    url = tab.data.playlist.medialist[1].sources.m3u8.auto .. '$OPT:no-spu'
-    title = tab.data.playlist.medialist[1].title
-
-elseif string.match(inAdr, 'channel/(%d+)') then
+if string.match(inAdr, 'channel/(%d+)') then
     local answer = _send_request(session, inAdr)
     local address = string.match(answer, '"embedUrl": "(.-)"')
 
@@ -82,6 +77,12 @@ elseif string.match(inAdr, 'channel/(%d+)') then
     elseif string.match(address, 'audio%-live') then
         local tab = _get_page('channel/(%d+)', 'https://player.smotrim.ru/iframe/dataaudiolive/id/', '')
         url = tab.data.playlist.medialist[1].source.auto
+        title = tab.data.playlist.medialist[1].title
+    elseif string.match(address, '/live/') then
+        uid = string.match(address, '/uid/(.-)/')
+        sid = string.match(address, '/sid/(.-)')
+        local tab = _get_page('channel/(%d+)', 'https://player.smotrim.ru/iframe/datalive/uid/' .. uid .. "/sid/" .. sid, '')
+        url = tab.data.playlist.medialist[1].sources.m3u8.auto .. '$OPT:no-spu'
         title = tab.data.playlist.medialist[1].title
     end
 
