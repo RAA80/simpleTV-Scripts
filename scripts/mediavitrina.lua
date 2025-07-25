@@ -1,4 +1,4 @@
--- script for mediavitrina.ru (22/06/2024)
+-- script for mediavitrina.ru (25/07/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://player.mediavitrina.ru/rentv/rentv_web/player.html
@@ -24,8 +24,8 @@ m_simpleTV.Http.SetTimeout(session, 20000)
 
 local json = require "rxijson"
 
-local function _send_request(session, address)
-    local err, answer = m_simpleTV.Http.Request(session, {url=address})
+local function _send_request(session, address, header)
+    local err, answer = m_simpleTV.Http.Request(session, {url=address, headers=header})
     if err ~= 200 then
         m_simpleTV.Http.Close(session)
         m_simpleTV.OSD.ShowMessage("Connection error: " .. err, 255, 3)
@@ -35,14 +35,25 @@ local function _send_request(session, address)
     return answer
 end
 
-local answer = _send_request(session, inAdr)
+local answer = _send_request(session, inAdr, nil)
 local url = string.match(answer, "api: {.-sources: {.-url: '(.-)'")
 url = string.gsub(url, '{{APPLICATION_ID}}', "")
 url = string.gsub(url, '{{PLAYER_REFERER_HOSTNAME}}', "mediavitrina.ru")
 url = string.gsub(url, '{{CONFIG_CHECKSUM_SHA256}}', "")
-url = string.gsub(url, '/v3/', "/v1/")
 
-local answer = _send_request(session, url)
+local header = 'Host: media.mediavitrina.ru\n' ..
+               'Referer: https://player.mediavitrina.ru/\n' ..
+               'Origin: https://player.mediavitrina.ru\n' ..
+               'DNT: 1\n' ..
+               'Connection: keep-alive\n' ..
+               'Sec-Fetch-Dest: empty\n' ..
+               'Sec-Fetch-Mode: cors\n' ..
+               'Sec-Fetch-Site: same-site\n' ..
+               'Sec-GPC: 1\n' ..
+               'Pragma: no-cache\n' ..
+               'Cache-Control: no-cache\n' ..
+               'TE: trailers'
+local answer = _send_request(session, url, header)
 local data = json.decode(answer)
 url = data.hls[1] or data.mpd[1]
 
