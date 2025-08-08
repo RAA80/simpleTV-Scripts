@@ -1,10 +1,12 @@
--- script for ovego.tv (20/06/2025)
+-- script for cdntvpotok.com (07/08/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: http://ovego.tv/publ/live_tv/razvlekatelnye/paramount_comedy/7-1-0-1188
--- example: http://telik.live/fox.html
--- example: http://telik.live/trash-tv.html
--- example: http://smotret-tv.live/kinopokaz.html
+-- example: https://telik.live/fox.html
+-- example: https://telik.live/trash-tv.html
+-- example: http://sweet-tv.net/discovery-channel.html
+-- example: https://smotret-tv.live/kinopokaz.html
+-- example: https://smotru.tv/eurosport-1.html
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -14,6 +16,8 @@ if inAdr == nil then return end
 
 if not string.match(inAdr, 'ovego%.tv/(.+)') and
    not string.match(inAdr, 'smotret%-tv%.live/(.+)') and
+   not string.match(inAdr, 'sweet%-tv%.net/(.+)') and
+   not string.match(inAdr, 'smotru%.tv/(.+)') and
    not string.match(inAdr, 'telik%.live/(.+)') then return end
 
 m_simpleTV.Control.ChangeAddress = 'Yes'
@@ -38,22 +42,12 @@ local function _send_request(session, address, header)
     return answer
 end
 
-local function src_url_extractor(text)
-    for result in string.gmatch(text, 'src="(.-)"') do
-        if string.match(result, 'php') then
-            return result
-        end
-    end
-end
-
 
 local answer = _send_request(session, inAdr, "")
-local src = src_url_extractor(answer)
+local src = string.match(answer, '<iframe.-src="(.-php)"')
 
-local referer = string.match(inAdr, "(http://.-)/") or
-                string.match(inAdr, "(https://.-)/")
-local host = string.match(src, "(http://.-)/") or
-             string.match(src, "(https://.-)/")
+local referer = string.match(inAdr, "(https?://.-)/")
+local host = string.match(src, "(https?://.-)/")
 local header = "Host: " .. host .. "\n" ..
                "Referer: " .. referer .. "\n" ..
                "Upgrade-Insecure-Requests: 1"
@@ -62,12 +56,7 @@ local answer = _send_request(session, src, header)
 local signature = string.match(answer, 'signature = "(.-)"') or ""
 local url = string.match(answer, 'file:"(.-)[ "]') or
             string.match(answer, 'file=(.-)"')
-
-url = string.gsub(url, " or ", " ")
-for part in string.gmatch(url, "([^" .. "%s+" .. "]+)") do
-    url = part
-    break
-end
+url = string.match(url, "([^%s+]+)")
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentAddress = url .. signature
