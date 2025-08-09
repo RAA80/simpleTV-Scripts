@@ -1,8 +1,9 @@
--- script for rutube.ru (24/11/2023)
+-- script for rutube.ru (09/08/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://rutube.ru/video/a88448f3a273028b52f6d66bf5cc68fd/
 -- example: https://rutube.ru/video/c58f502c7bb34a8fcdd976b221fca292/
+-- example: https://rutube.ru/shorts/2b920289347334ee93e63873bc444212/
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -25,7 +26,7 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 local json = require "rxijson"
 
-local id = string.match(inAdr, '/video/(%w+)')
+local id = string.match(inAdr, '/video/(%w+)') or string.match(inAdr, '/shorts/(%w+)')
 inAdr = "http://rutube.ru/api/play/options/" .. id
 
 local rc, answer = m_simpleTV.Http.Request(session, {url=inAdr})
