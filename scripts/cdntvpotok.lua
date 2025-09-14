@@ -1,4 +1,4 @@
--- script for cdntvpotok.com (07/08/2025)
+-- script for cdntvpotok.com (07/09/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: http://ovego.tv/publ/live_tv/razvlekatelnye/paramount_comedy/7-1-0-1188
@@ -57,6 +57,7 @@ local signature = string.match(answer, 'signature = "(.-)"') or ""
 local url = string.match(answer, 'file:"(.-)[ "]') or
             string.match(answer, 'file=(.-)"')
 url = string.match(url, "([^%s+]+)")
+url = unescape(url)
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentAddress = url .. signature
