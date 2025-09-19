@@ -1,4 +1,4 @@
--- script for tbbt.live (11/08/2025)
+-- script for tbbt.live (19/09/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://tbbt.live
@@ -15,7 +15,7 @@ m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
 
 local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
-local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/79.0.2785.143 Safari/537.36', proxy, false)
+local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; rv:103.0) Gecko/20100101 Firefox/103.0', proxy, false)
 if session == nil then return end
 
 m_simpleTV.Http.SetTimeout(session, 20000)
@@ -30,7 +30,7 @@ if rc ~= 200 then
 end
 
 local title = string.match(answer, "<title>(.-)</title>")
-local url = string.match(answer, "player%.src..%s+src: '(.-)'")
+local url = string.match(answer, "player%.src.-src: '(.-)'")
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentTitle_UTF8 = title
