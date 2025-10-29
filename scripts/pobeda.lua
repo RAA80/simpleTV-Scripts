@@ -1,4 +1,4 @@
--- script for pobeda.tv (17/04/2023)
+-- script for pobeda.tv (29/10/2025)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://pobeda.tv/live
@@ -29,7 +29,7 @@ if rc ~= 200 then
     return
 end
 
-local url = 'https:' .. string.match(answer, 'source: "(.-)"')
+local url = string.match(answer, 'source: "(.-)"')
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentAddress = url .. '$OPT:http-referrer=https://pobeda.tv/'
