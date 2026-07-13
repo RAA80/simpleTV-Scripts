@@ -20,7 +20,7 @@ m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
 
 local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
-local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; rv:103.0) Gecko/20100101 Firefox/103.0', proxy, false)
+local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0', proxy, false)
 if session == nil then return end
 
 m_simpleTV.Http.SetTimeout(session, 20000)
@@ -133,11 +133,11 @@ local function _get_discography(id)
 
     local _table = tab.result.ids[id]
 
-    local address = 'https://zvuk.com/api/tiny/artists?ids=' .. id
-    local tab = _send_request(session, 'get', address, nil, nil)
+    --local address = 'https://zvuk.com/api/tiny/artists?ids=' .. id
+    --local tab = _send_request(session, 'get', address, nil, nil)
 
-    local logo = tab.result.artists[id].image.src
-    local name = tab.result.artists[id].title
+    local logo = 'https://cdn-image.zvuk.com/pic?id='.. id .. '&size=large&type=artist'     --tab.result.artists[id].image.src
+    local name = ""     --tab.result.artists[id].title
 
     local discography = {}
     local j = 1

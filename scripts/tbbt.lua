@@ -1,4 +1,4 @@
--- script for tbbt.live (19/09/2025)
+-- script for tbbt.live (08/07/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://tbbt.live
@@ -34,4 +34,4 @@ local url = string.match(answer, "player%.src.-src: '(.-)'")
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentTitle_UTF8 = title
-m_simpleTV.Control.CurrentAddress = url
+m_simpleTV.Control.CurrentAddress = url .. "$OPT:no-gnutls-system-trust"
