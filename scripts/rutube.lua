@@ -1,9 +1,12 @@
--- script for rutube.ru (09/08/2025)
+-- script for rutube.ru (19/08/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://rutube.ru/video/a88448f3a273028b52f6d66bf5cc68fd/
--- example: https://rutube.ru/video/c58f502c7bb34a8fcdd976b221fca292/
--- example: https://rutube.ru/shorts/2b920289347334ee93e63873bc444212/
+--          https://rutube.ru/video/c58f502c7bb34a8fcdd976b221fca292/
+--          https://rutube.ru/live/video/c37cd74192c6bc3d6cd6077c0c4fd686/
+--          https://rutube.ru/shorts/2b920289347334ee93e63873bc444212/
+--          https://rutube.ru/play/embed/da912cee19d409d5b5cdf504499383a0
+--          https://rutube.ru/plst/1673828/
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -17,7 +20,7 @@ m_simpleTV.Control.ChangeAddress = 'Yes'
 m_simpleTV.Control.CurrentAddress = ''
 
 local proxy = ''    -- 'http://proxy-nossl.antizapret.prostovpn.org:29976'
-local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/79.0.2785.143 Safari/537.36', proxy, false)
+local session = m_simpleTV.Http.New('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0', proxy, false)
 if session == nil then return end
 
 m_simpleTV.Http.SetTimeout(session, 10000)
@@ -26,20 +29,74 @@ m_simpleTV.Http.SetTimeout(session, 10000)
 
 local json = require "rxijson"
 
-local id = string.match(inAdr, '/video/(%w+)') or string.match(inAdr, '/shorts/(%w+)')
-inAdr = "http://rutube.ru/api/play/options/" .. id
+local function _send_request(session, address)
+    local err, answer = m_simpleTV.Http.Request(session, {url=address})
+    if err ~= 200 then
+        m_simpleTV.Http.Close(session)
+        m_simpleTV.OSD.ShowMessage("Connection error: " .. err, 255, 3)
+        return
+    end
 
-local rc, answer = m_simpleTV.Http.Request(session, {url=inAdr})
-if rc ~= 200 then
-    m_simpleTV.Http.Close(session)
-    m_simpleTV.OSD.ShowMessage("Connection error: " .. rc, 255, 3)
-    return
+    return json.decode(answer)
 end
 
-local data = json.decode(answer)
-local title = data.title
-local url = data.video_balancer.m3u8 or data.live_streams.hls[1].url
+local function _show_playlist(url)
+    local id = string.match(url, '/plst/(%w+)')
+    local url = string.format("https://rutube.ru/api/metainfo/tv/%s/?format=json", id)
+    local tab = _send_request(session, url)
+    local name = tab.name
+
+    local list = {}
+    local i = 0
+    local page = 1
+
+    while true do
+        url = string.format("https://rutube.ru/api/playlist/custom/%s/videos?page=%s&format=json&limit=40", id, page)
+        tab = _send_request(session, url)
+
+        for k=1, #tab.results, 1 do
+            list[i+k] = {}
+            list[i+k].Id = i+k
+            list[i+k].Name = tab.results[k].title
+            list[i+k].Address = tab.results[k].video_url
+        end
+
+        i = i + #tab.results
+
+        if tab.has_next then
+            page = page + 1
+        else
+            break
+        end
+    end
+
+    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, -1, list, 10000, 2)
+    return list[id or 1].Name, "wait"
+end
+
+local function _show_single_video(url)
+    local id = string.match(url, '/video/(%w+)') or
+               string.match(url, '/shorts/(%w+)') or
+               string.match(url, '/play/embed/(%w+)')
+    local link = "http://rutube.ru/api/play/options/" .. id
+    local tab = _send_request(session, link)
+
+    return tab.title, tab.video_balancer.m3u8 or tab.live_streams.hls[1].url
+end
+
+
+local title = ""
+local link = inAdr
+
+if string.match(link, '/plst/(%w+)') then
+    title, link = _show_playlist(link)
+
+elseif string.match(link, '/video/(%w+)') or
+       string.match(link, '/shorts/(%w+)') or
+       string.match(link, '/play/embed/(%w+)') then
+    title, link = _show_single_video(link)
+end
 
 m_simpleTV.Http.Close(session)
 m_simpleTV.Control.CurrentTitle_UTF8 = title
-m_simpleTV.Control.CurrentAddress = url
+m_simpleTV.Control.CurrentAddress = link
