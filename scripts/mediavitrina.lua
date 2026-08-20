@@ -1,7 +1,7 @@
--- script for mediavitrina.ru (25/07/2025)
+-- script for mediavitrina.ru (20/08/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
--- example: https://player.mediavitrina.ru/rentv/rentv_web/player.html
+-- example: https://player.mediavitrina.ru/rentv/vitrinatv_web/player.html
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -36,10 +36,10 @@ local function _send_request(session, address, header)
 end
 
 local answer = _send_request(session, inAdr, nil)
-local url = string.match(answer, "api: {.-sources: {.-url: '(.-)'")
+local url = string.match(answer, "streams_api_v2_url: '(.-)'")
 url = string.gsub(url, '{{APPLICATION_ID}}', "")
-url = string.gsub(url, '{{PLAYER_REFERER_HOSTNAME}}', "mediavitrina.ru")
-url = string.gsub(url, '{{CONFIG_CHECKSUM_SHA256}}', "")
+url = string.gsub(url, '{{PLAYER_REFERER_HOSTNAME}}', "vitrina.tv")
+url = string.gsub(url, '{{CONFIG_CHECKSUM_SHA256}}', "undefined")
 
 local header = 'Host: media.mediavitrina.ru\n' ..
                'Referer: https://player.mediavitrina.ru/\n' ..
