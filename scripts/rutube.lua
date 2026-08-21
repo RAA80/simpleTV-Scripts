@@ -1,11 +1,11 @@
--- script for rutube.ru (19/08/2026)
+-- script for rutube.ru (21/08/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://rutube.ru/video/a88448f3a273028b52f6d66bf5cc68fd/
 --          https://rutube.ru/video/c58f502c7bb34a8fcdd976b221fca292/
 --          https://rutube.ru/live/video/c37cd74192c6bc3d6cd6077c0c4fd686/
 --          https://rutube.ru/shorts/2b920289347334ee93e63873bc444212/
---          https://rutube.ru/play/embed/da912cee19d409d5b5cdf504499383a0
+--          https://rutube.ru/play/embed/da912cee19d409d5b5cdf504499383a0/
 --          https://rutube.ru/plst/1673828/
 
 
@@ -40,8 +40,7 @@ local function _send_request(session, address)
     return json.decode(answer)
 end
 
-local function _show_playlist(url)
-    local id = string.match(url, '/plst/(%w+)')
+local function _show_playlist(id)
     local url = string.format("https://rutube.ru/api/metainfo/tv/%s/?format=json", id)
     local tab = _send_request(session, url)
     local name = tab.name
@@ -50,7 +49,7 @@ local function _show_playlist(url)
     local i = 0
     local page = 1
 
-    while true do
+    repeat
         url = string.format("https://rutube.ru/api/playlist/custom/%s/videos?page=%s&format=json&limit=40", id, page)
         tab = _send_request(session, url)
 
@@ -62,41 +61,30 @@ local function _show_playlist(url)
         end
 
         i = i + #tab.results
-
-        if tab.has_next then
-            page = page + 1
-        else
-            break
-        end
-    end
+        page = page + 1
+    until not tab.has_next
 
     local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, -1, list, 10000, 2)
-    return list[id or 1].Name, "wait"
+
+    m_simpleTV.Control.ChangeAddress = 'Yes'
+    m_simpleTV.Control.CurrentAddress = "wait"
 end
 
-local function _show_single_video(url)
-    local id = string.match(url, '/video/(%w+)') or
-               string.match(url, '/shorts/(%w+)') or
-               string.match(url, '/play/embed/(%w+)')
+local function _show_single_video(id)
     local link = "http://rutube.ru/api/play/options/" .. id
     local tab = _send_request(session, link)
 
-    return tab.title, tab.video_balancer.m3u8 or tab.live_streams.hls[1].url
+    m_simpleTV.Control.CurrentTitle_UTF8 = tab.title
+    m_simpleTV.Control.CurrentAddress = tab.video_balancer.m3u8 or tab.live_streams.hls[1].url
 end
 
 
-local title = ""
-local link = inAdr
-
-if string.match(link, '/plst/(%w+)') then
-    title, link = _show_playlist(link)
-
-elseif string.match(link, '/video/(%w+)') or
-       string.match(link, '/shorts/(%w+)') or
-       string.match(link, '/play/embed/(%w+)') then
-    title, link = _show_single_video(link)
-end
+local handlers = {['video']=_show_single_video,
+                  ['shorts']=_show_single_video,
+                  ['live/video']=_show_single_video,
+                  ['play/embed']=_show_single_video,
+                  ['plst']=_show_playlist}
+local frmt, id = string.match(inAdr, "https?://rutube%.ru/([%w/]+)/([%da-z]+)")
+handlers[frmt](id)
 
 m_simpleTV.Http.Close(session)
-m_simpleTV.Control.CurrentTitle_UTF8 = title
-m_simpleTV.Control.CurrentAddress = link
