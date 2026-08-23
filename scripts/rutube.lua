@@ -1,4 +1,4 @@
--- script for rutube.ru (21/08/2026)
+-- script for rutube.ru (23/08/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://rutube.ru/video/a88448f3a273028b52f6d66bf5cc68fd/
@@ -7,6 +7,7 @@
 --          https://rutube.ru/shorts/2b920289347334ee93e63873bc444212/
 --          https://rutube.ru/play/embed/da912cee19d409d5b5cdf504499383a0/
 --          https://rutube.ru/plst/1673828/
+--          https://rutube.ru/channel/1765289/
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -78,12 +79,54 @@ local function _show_single_video(id)
     m_simpleTV.Control.CurrentAddress = tab.video_balancer.m3u8 or tab.live_streams.hls[1].url
 end
 
+local function _show_channel_items(id, pattern, host)
+    local list = {}
+    local i = 0
+    local page = 1
+
+    repeat
+        url = string.format(pattern, id, page)
+        tab = _send_request(session, url)
+
+        for k=1, #tab.results, 1 do
+            list[i+k] = {}
+            list[i+k].Id = i+k
+            list[i+k].Name = tab.results[k].title
+            list[i+k].Address = host .. tab.results[k].id
+        end
+
+        i = i + #tab.results
+        page = page + 1
+    until not tab.has_next
+
+    local _, id = m_simpleTV.OSD.ShowSelect_UTF8("Playlists", -1, list, 10000, 2)
+
+    m_simpleTV.Control.ChangeAddress = 'Yes'
+    m_simpleTV.Control.CurrentAddress = "wait"
+end
+
+local function _show_channel(uid)
+    local handle = {{name = "Shorts",    args = {uid, "https://rutube.ru/api/video/person/%s/?origin__type=rshorts&page=%s", "https://rutube.ru/shorts/"}},
+                    {name = "Playlists", args = {uid, "https://rutube.ru/api/playlist/user/%s/?page=%s", "https://rutube.ru/plst/"}}}
+    local list = {}
+
+    for i=1, #handle, 1 do
+        list[i] = {}
+        list[i].Id = i
+        list[i].Name = handle[i].name
+    end
+
+    local _, id = m_simpleTV.OSD.ShowSelect_UTF8("Channel", 0, list, 10000, 3)
+    return _show_channel_items(unpack(handle[id or 1].args))
+end
+
 
 local handlers = {['video']=_show_single_video,
                   ['shorts']=_show_single_video,
                   ['live/video']=_show_single_video,
                   ['play/embed']=_show_single_video,
-                  ['plst']=_show_playlist}
+                  ['plst']=_show_playlist,
+                  ['channel']=_show_channel}
 local frmt, id = string.match(inAdr, "https?://rutube%.ru/([%w/]+)/([%da-z]+)")
 handlers[frmt](id)
 
