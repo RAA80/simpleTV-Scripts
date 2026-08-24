@@ -1,4 +1,4 @@
--- script for rutube.ru (23/08/2026)
+-- script for rutube.ru (24/08/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://rutube.ru/video/a88448f3a273028b52f6d66bf5cc68fd/
@@ -85,6 +85,8 @@ local function _show_channel_items(id, pattern, host)
     local page = 1
 
     repeat
+        m_simpleTV.OSD.ShowMessage("Read page " .. page)
+
         url = string.format(pattern, id, page)
         tab = _send_request(session, url)
 
@@ -106,7 +108,8 @@ local function _show_channel_items(id, pattern, host)
 end
 
 local function _show_channel(uid)
-    local handle = {{name = "Shorts",    args = {uid, "https://rutube.ru/api/video/person/%s/?origin__type=rshorts&page=%s", "https://rutube.ru/shorts/"}},
+    local handle = {{name = "Videos",    args = {uid, "https://rutube.ru/api/video/person/%s/?page=%s", "https://rutube.ru/video/"}},
+                    {name = "Shorts",    args = {uid, "https://rutube.ru/api/video/person/%s/?origin__type=rshorts&page=%s", "https://rutube.ru/shorts/"}},
                     {name = "Playlists", args = {uid, "https://rutube.ru/api/playlist/user/%s/?page=%s", "https://rutube.ru/plst/"}}}
     local list = {}
 
@@ -126,7 +129,8 @@ local handlers = {['video']=_show_single_video,
                   ['live/video']=_show_single_video,
                   ['play/embed']=_show_single_video,
                   ['plst']=_show_playlist,
-                  ['channel']=_show_channel}
+                  ['channel']=_show_channel,
+                  ['video/person']=_show_channel}
 local frmt, id = string.match(inAdr, "https?://rutube%.ru/([%w/]+)/([%da-z]+)")
 handlers[frmt](id)
 
