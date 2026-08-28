@@ -1,4 +1,4 @@
--- script for rutube.ru (24/08/2026)
+-- script for rutube.ru (28/08/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://rutube.ru/video/a88448f3a273028b52f6d66bf5cc68fd/
@@ -41,34 +41,56 @@ local function _send_request(session, address)
     return json.decode(answer)
 end
 
-local function _show_playlist(id)
-    local url = string.format("https://rutube.ru/api/metainfo/tv/%s/?format=json", id)
-    local tab = _send_request(session, url)
-    local name = tab.name
-
+local function _show_channel_items(id, name, pattern, host)
     local list = {}
     local i = 0
     local page = 1
 
     repeat
-        url = string.format("https://rutube.ru/api/playlist/custom/%s/videos?page=%s&format=json&limit=40", id, page)
-        tab = _send_request(session, url)
+        m_simpleTV.OSD.ShowMessage("Read page " .. page)
+
+        local url = string.format(pattern, id, page)
+        local tab = _send_request(session, url)
 
         for k=1, #tab.results, 1 do
-            list[i+k] = {}
-            list[i+k].Id = i+k
-            list[i+k].Name = tab.results[k].title
-            list[i+k].Address = tab.results[k].video_url
+            list[i+k] = {Id = i+k,
+                         Name = tab.results[k].title,
+                         Address = host .. tab.results[k].id}
         end
 
         i = i + #tab.results
         page = page + 1
     until not tab.has_next
 
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, -1, list, 10000, 2)
+    m_simpleTV.OSD.ShowSelect_UTF8(name, -1, list, 10000, 2)
 
     m_simpleTV.Control.ChangeAddress = 'Yes'
     m_simpleTV.Control.CurrentAddress = "wait"
+end
+
+local function _show_channel(uid)
+    local handle = {{"Videos", "https://rutube.ru/api/video/person/%s/?page=%s", "https://rutube.ru/video/"},
+                    {"Shorts", "https://rutube.ru/api/video/person/%s/?origin__type=rshorts&page=%s", "https://rutube.ru/shorts/"},
+                    {"Playlists", "https://rutube.ru/api/playlist/user/%s/?page=%s", "https://rutube.ru/plst/"}}
+    local list = {}
+
+    for i=1, #handle, 1 do
+        list[i] = {Id = i,
+                   Name = handle[i][1]}
+    end
+
+    local _, id = m_simpleTV.OSD.ShowSelect_UTF8("Channel", 0, list, 10000, 3)
+    return _show_channel_items(uid, unpack(handle[id or 1]))
+end
+
+local function _show_playlist(id)
+    local url = string.format("https://rutube.ru/api/metainfo/tv/%s/?format=json", id)
+    local tab = _send_request(session, url)
+
+    local host = "https://rutube.ru/video/"
+    local pattern = "https://rutube.ru/api/playlist/custom/%s/videos?page=%s&format=json&limit=40"
+
+    return _show_channel_items(id, tab.name, pattern, host)
 end
 
 local function _show_single_video(id)
@@ -77,50 +99,6 @@ local function _show_single_video(id)
 
     m_simpleTV.Control.CurrentTitle_UTF8 = tab.title
     m_simpleTV.Control.CurrentAddress = tab.video_balancer.m3u8 or tab.live_streams.hls[1].url
-end
-
-local function _show_channel_items(id, pattern, host)
-    local list = {}
-    local i = 0
-    local page = 1
-
-    repeat
-        m_simpleTV.OSD.ShowMessage("Read page " .. page)
-
-        url = string.format(pattern, id, page)
-        tab = _send_request(session, url)
-
-        for k=1, #tab.results, 1 do
-            list[i+k] = {}
-            list[i+k].Id = i+k
-            list[i+k].Name = tab.results[k].title
-            list[i+k].Address = host .. tab.results[k].id
-        end
-
-        i = i + #tab.results
-        page = page + 1
-    until not tab.has_next
-
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8("Playlists", -1, list, 10000, 2)
-
-    m_simpleTV.Control.ChangeAddress = 'Yes'
-    m_simpleTV.Control.CurrentAddress = "wait"
-end
-
-local function _show_channel(uid)
-    local handle = {{name = "Videos",    args = {uid, "https://rutube.ru/api/video/person/%s/?page=%s", "https://rutube.ru/video/"}},
-                    {name = "Shorts",    args = {uid, "https://rutube.ru/api/video/person/%s/?origin__type=rshorts&page=%s", "https://rutube.ru/shorts/"}},
-                    {name = "Playlists", args = {uid, "https://rutube.ru/api/playlist/user/%s/?page=%s", "https://rutube.ru/plst/"}}}
-    local list = {}
-
-    for i=1, #handle, 1 do
-        list[i] = {}
-        list[i].Id = i
-        list[i].Name = handle[i].name
-    end
-
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8("Channel", 0, list, 10000, 3)
-    return _show_channel_items(unpack(handle[id or 1].args))
 end
 
 
