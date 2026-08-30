@@ -1,12 +1,12 @@
--- script for zvuk.com (23/07/2025)
+-- script for zvuk.com (30/08/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://zvuk.com/track/66985389
--- example: https://zvuk.com/release/10264599
--- example: https://zvuk.com/artist/521621
--- example: https://zvuk.com/playlist/7222566
--- example: https://zvuk.com/episode/90195375
--- example: https://zvuk.com/podcast/20762002
+--          https://zvuk.com/release/10264599
+--          https://zvuk.com/artist/521621
+--          https://zvuk.com/playlist/7222566
+--          https://zvuk.com/episode/90195375
+--          https://zvuk.com/podcast/20762002
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -25,10 +25,13 @@ if session == nil then return end
 
 m_simpleTV.Http.SetTimeout(session, 20000)
 
----------------------------------------------------------------------------
+------------------------------- Settings --------------------------------------
+
+local token = nil   -- "your token" or nil for default
+
+-------------------------------------------------------------------------------
 
 local json = require "rxijson"
-
 
 local function _send_request(session, method, address, body, header)
     local rc, answer = m_simpleTV.Http.Request(session, {method=method, url=address, body=body, headers=header})
@@ -41,11 +44,23 @@ local function _send_request(session, method, address, body, header)
     return json.decode(answer)
 end
 
+local function _set_panel_logo(url)
+    if m_simpleTV.Control.MainMode == 0 then
+        local cover = string.gsub(url, "{size}", "200x200") or ""
+        m_simpleTV.Control.ChangeChannelLogo(cover, m_simpleTV.Control.ChannelID, 'CHANGE_IF_NOT_EQUAL')
+    end
+end
+
+local function _show_select(url, name, list, mode)
+    _set_panel_logo(url)
+    return m_simpleTV.OSD.ShowSelect_UTF8(name, -1, list, 10000, mode)
+end
+
 local function _get_token()
-    local address = 'https://zvuk.com/api/tiny/profile'
+    local address = 'https://zvuk.com/api/v2/tiny/profile'
     local tab = _send_request(session, 'get', address, nil, nil)
 
-    return tab.result.token
+    return tab.result.profile.token
 end
 
 local function _get_artist(_table)
@@ -57,157 +72,109 @@ local function _get_artist(_table)
     return table.concat(artists, ", ")
 end
 
-local function _get_track(id, token)
-    local address = 'https://zvuk.com/api/v1/graphql'
-    local body = '{"operationName":"getStream","variables":{"isFlacDRM":false,"ids":[' .. id .. ']},"query":"query getStream($ids: [ID!]!, $isFlacDRM: Boolean = false) {\\n  mediaContents(ids: $ids) {\\n    ... on Track {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n        flacdrm @include(if: $isFlacDRM)\\n      }\\n    }\\n    ... on Episode {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n    ... on Chapter {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n  }\\n}\\n"}'
-    local header = 'content-type: application/json\n' ..
-                   'x-auth-token: ' .. token
-    local tab = _send_request(session, 'post', address, body, header)
+local function _create_table(tab, tracks, logo, name)
+    local list = {}
+    for i=1, #tab, 1 do
+        list[i] = {Id = i,
+                   Name = _get_artist(tracks[tostring(tab[i])].artist_names or tracks[tostring(tab[i])].author_names) .. " - " .. tracks[tostring(tab[i])].title,
+                   Address = 'https://zvuk.com/track/' .. tab[i]}
+    end
 
-    return tab.data.mediaContents[1].stream.mid .. '$OPT:no-gnutls-system-trust'
+    _show_select(logo, name, list, 2)
+
+    m_simpleTV.Control.ChangeAddress = 'Yes'
+    m_simpleTV.Control.CurrentAddress = "wait"
 end
 
-local function _get_album(id, token)
+local function _get_discography(id, header)
+    local address = 'https://zvuk.com/api/tiny/artists/releases?ids=' .. id .. "&limit=1000&include=release"
+    local tab = _send_request(session, 'get', address, nil, header)
+
+    local _table = tab.result.ids[id]
+    local logo = 'https://cdn-image.zvuk.com/pic?id='.. id .. '&size=large&type=artist'     --tab.result.artists[id].image.src
+    local name = ""
+
+    local address = 'https://zvuk.com/api/tiny/releases?ids=' .. _get_artist(_table)
+    local tab = _send_request(session, 'get', address, nil, header)
+
+    local i = 1
+    local list = {}
+    for key, value in pairs(tab.result.releases) do
+        local title = value.title
+        local date = string.sub(value.date, 1, 4)
+        local type_ = value.type
+
+        list[i] = {Id = i,
+                   Name = type_ .. ": " .. title .. " (" .. date .. ")",
+                   Address = 'https://zvuk.com/release/' .. value.id}
+        i = i + 1
+    end
+
+    local _, idx = _show_select(logo, name, list, 3)
+    return m_simpleTV.Control.PlayAddressT({address=list[idx].Address})
+end
+
+local function _get_album(id, header)
     local address = 'https://zvuk.com/api/tiny/releases?ids=' .. id .. '&include=track'
-    local tab = _send_request(session, 'get', address, nil, nil)
+    local tab = _send_request(session, 'get', address, nil, header)
 
     local _table = tab.result.releases[id].track_ids
     local tracks = tab.result.tracks
     local logo = tab.result.releases[id].image.src
     local name = _get_artist(tab.result.releases[id].artist_names) .. " - " .. tab.result.releases[id].title
 
-    local album = {}
-    for i=1, #_table, 1 do
-        album[i] = {}
-        album[i].Id = i
-        album[i].Name = _get_artist(tracks[tostring(_table[i])].artist_names) .. " - " .. tracks[tostring(_table[i])].title
-        album[i].Address = _get_track(_table[i], token)
-    end
-
-    return logo, name, album
+    return _create_table(_table, tracks, logo, name)
 end
 
-local function _get_playlist(id, token)
+local function _get_playlist(id, header)
     local address = 'https://zvuk.com/api/tiny/playlists?ids=' .. id .. '&include=track'
-    local tab = _send_request(session, 'get', address, nil, nil)
+    local tab = _send_request(session, 'get', address, nil, header)
 
     local _table = tab.result.playlists[id].track_ids
     local tracks = tab.result.tracks
     local logo = "https://zvuk.com" .. tab.result.playlists[id].image.src
     local name = tab.result.playlists[id].title
 
-    local playlist = {}
-    for i=1, #_table, 1 do
-        playlist[i] = {}
-        playlist[i].Id = i
-        playlist[i].Name = _get_artist(tracks[tostring(_table[i])].artist_names) .. " - " .. tracks[tostring(_table[i])].title
-        playlist[i].Address = _get_track(_table[i], token)
-    end
-
-    return logo, name, playlist
+    return _create_table(_table, tracks, logo, name)
 end
 
-local function _get_podcast(id, token)
+local function _get_podcast(id, header)
     local address = 'https://zvuk.com/api/tiny/podcasts?ids=' .. id
-    local tab = _send_request(session, 'get', address, nil, nil)
+    local tab = _send_request(session, 'get', address, nil, header)
 
     local _table = tab.result.podcasts[id].episode_ids
     local tracks = tab.result.episodes
     local logo = tab.result.podcasts[id].image.src
     local name = tab.result.podcasts[id].title
 
-    local podcast = {}
-    for i=1, #_table, 1 do
-        podcast[i] = {}
-        podcast[i].Id = i
-        podcast[i].Name = _get_artist(tracks[tostring(_table[i])].author_names) .. " - " .. tracks[tostring(_table[i])].title
-        podcast[i].Address = _get_track(_table[i], token)
-    end
-
-    return logo, name, podcast
+    return _create_table(_table, tracks, logo, name)
 end
 
-local function _get_discography(id)
-    local address = 'https://zvuk.com/api/tiny/artists/releases?ids=' .. id .. "&limit=1000"
-    local tab = _send_request(session, 'get', address, nil, nil)
+local function _get_track(id, header)
+    local address = 'https://zvuk.com/api/v1/graphql'
+    local body = '{"operationName":"GetFullTrack","variables":{"isFlacDRM":false,"ids":[' .. id .. ']},"query":"query GetFullTrack(\\n    $ids: [ID!]!\\n    $withReleases: Boolean = false\\n    $withArtists: Boolean = false\\n) {\\n    getTracks(ids: $ids) {\\n        id\\n        title\\n        searchTitle\\n        position\\n        duration\\n        availability\\n        artistTemplate\\n        condition\\n        explicit\\n        lyrics\\n        zchan\\n        genres {\\n            id\\n            name\\n            shortName\\n        }\\n        collectionItemData {\\n            itemStatus\\n        }\\n        artists @include(if: $withArtists) {\\n            id\\n            title\\n            searchTitle\\n            description\\n            hasPage\\n            image {\\n                src\\n                palette\\n                paletteBottom\\n            }\\n            secondImage {\\n                src\\n                palette\\n                paletteBottom\\n            }\\n            animation {\\n                artistId\\n                effect\\n                image\\n                background {\\n                    type\\n                    image\\n                    color\\n                    gradient\\n                }\\n            }\\n        }\\n        release @include(if: $withReleases) {\\n            id\\n            title\\n            searchTitle\\n            type\\n            date\\n            image {\\n                src\\n                palette\\n                paletteBottom\\n            }\\n            genres {\\n                id\\n                name\\n                shortName\\n            }\\n            label {\\n                id\\n                title\\n            }\\n            availability\\n            artistTemplate\\n        }\\n        hasFlac\\n    }\\n}\\n"}'
+    local tab1 = _send_request(session, 'post', address, body, header)
 
-    local _table = tab.result.ids[id]
+    local address = 'https://zvuk.com/api/v1/graphql'
+    local body = '{"operationName":"getStream","variables":{"isFlacDRM":false,"ids":[' .. id .. ']},"query":"query getStream($ids: [ID!]!, $isFlacDRM: Boolean = false) {\\n  mediaContents(ids: $ids) {\\n    ... on Track {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n        flacdrm @include(if: $isFlacDRM)\\n      }\\n    }\\n    ... on Episode {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n    ... on Chapter {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n  }\\n}\\n"}'
+    local tab2 = _send_request(session, 'post', address, body, header)
 
-    --local address = 'https://zvuk.com/api/tiny/artists?ids=' .. id
-    --local tab = _send_request(session, 'get', address, nil, nil)
-
-    local logo = 'https://cdn-image.zvuk.com/pic?id='.. id .. '&size=large&type=artist'     --tab.result.artists[id].image.src
-    local name = ""     --tab.result.artists[id].title
-
-    local discography = {}
-    local j = 1
-    for i=1, #_table, 1 do
-        local address = 'https://zvuk.com/api/tiny/releases?ids=' .. _table[i]
-        local tab = _send_request(session, 'get', address, nil, nil)
-
-        if next(tab and tab.result.releases) ~= nil then
-            local title = tab.result.releases[tostring(_table[i])].title
-            local date = string.sub(tab.result.releases[tostring(_table[i])].date, 1, 4)
-            local type_ = tab.result.releases[tostring(_table[i])].type
-
-            discography[j] = {}
-            discography[j].Id = j
-            discography[j].Name = type_ .. ": " .. title .. " (" .. date .. ")"
-            discography[j].Address = 'https://zvuk.com/release/' .. _table[i]
-
-            j = j + 1
-        end
-    end
-
-    return logo, name, discography
-end
-
-local function _set_panel_logo(url)
-    if m_simpleTV.Control.MainMode == 0 then
-        local cover = string.gsub(url, "{size}", "200x200") or ""
-        m_simpleTV.Control.ChangeChannelLogo(cover, m_simpleTV.Control.ChannelID, 'CHANGE_IF_NOT_EQUAL')
-    end
-end
-
-local function _show_select(url, name, list, mode)
-    _set_panel_logo(url)
-    local _, id = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, list, 10000, mode)
-
-    return list[id or 1].Name, list[id or 1].Address
+    m_simpleTV.Control.CurrentTitle_UTF8 = tab1.data.getTracks[1].title
+    m_simpleTV.Control.CurrentAddress = tab2.data.mediaContents[1].stream.mid .. '$OPT:no-gnutls-system-trust'
 end
 
 
-local url, title = ""
-local token = _get_token()
-
-if string.match(inAdr, 'track/(%d+)$') or string.match(inAdr, 'episode/(%d+)$') then
-    local id = string.match(inAdr, 'track/(%d+)$') or string.match(inAdr, 'episode/(%d+)$')
-    url = _get_track(id, token)
-
-elseif string.match(inAdr, 'release/(%d+)$') then
-    local id = string.match(inAdr, 'release/(%d+)$')
-    local logo, name, album = _get_album(id, token)
-    title, url = _show_select(logo, name, album, 0)
-
-elseif string.match(inAdr, 'playlist/(%d+)$') then
-    local id = string.match(inAdr, 'playlist/(%d+)$')
-    local logo, name, playlist = _get_playlist(id, token)
-    title, url = _show_select(logo, name, playlist, 0)
-
-elseif string.match(inAdr, 'podcast/(%d+)$') then
-    local id = string.match(inAdr, 'podcast/(%d+)$')
-    local logo, name, podcast = _get_podcast(id, token)
-    title, url = _show_select(logo, name, podcast, 0)
-
-elseif string.match(inAdr, 'artist/(%d+)$') then
-    local id = string.match(inAdr, 'artist/(%d+)$')
-    local logo, name, discography = _get_discography(id)
-    title, url = _show_select(logo, name, discography, 1)
-
-    m_simpleTV.Control.PlayAddressT({address=url})
-    return
-end
+local header = 'content-type: application/json\n' ..
+               'Referer: https://zvuk.com/\n' ..
+               'Origin: https://zvuk.com/\n' ..
+               'x-auth-token: ' .. (token or _get_token())
+local handlers = {track=_get_track,
+                  episode=_get_track,
+                  release=_get_album,
+                  playlist=_get_playlist,
+                  podcast=_get_podcast,
+                  artist=_get_discography}
+local frmt, id = string.match(inAdr, "https?://zvuk%.com/([%w/]+)/(%d+)")
+handlers[frmt](id, header)
 
 m_simpleTV.Http.Close(session)
-m_simpleTV.Control.CurrentTitle_UTF8 = title
-m_simpleTV.Control.CurrentAddress = url
