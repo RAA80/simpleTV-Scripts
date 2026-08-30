@@ -152,14 +152,21 @@ end
 
 local function _get_track(id, header)
     local address = 'https://zvuk.com/api/v1/graphql'
-    local body = '{"operationName":"GetFullTrack","variables":{"isFlacDRM":false,"ids":[' .. id .. ']},"query":"query GetFullTrack(\\n    $ids: [ID!]!\\n    $withReleases: Boolean = false\\n    $withArtists: Boolean = false\\n) {\\n    getTracks(ids: $ids) {\\n        id\\n        title\\n        searchTitle\\n        position\\n        duration\\n        availability\\n        artistTemplate\\n        condition\\n        explicit\\n        lyrics\\n        zchan\\n        genres {\\n            id\\n            name\\n            shortName\\n        }\\n        collectionItemData {\\n            itemStatus\\n        }\\n        artists @include(if: $withArtists) {\\n            id\\n            title\\n            searchTitle\\n            description\\n            hasPage\\n            image {\\n                src\\n                palette\\n                paletteBottom\\n            }\\n            secondImage {\\n                src\\n                palette\\n                paletteBottom\\n            }\\n            animation {\\n                artistId\\n                effect\\n                image\\n                background {\\n                    type\\n                    image\\n                    color\\n                    gradient\\n                }\\n            }\\n        }\\n        release @include(if: $withReleases) {\\n            id\\n            title\\n            searchTitle\\n            type\\n            date\\n            image {\\n                src\\n                palette\\n                paletteBottom\\n            }\\n            genres {\\n                id\\n                name\\n                shortName\\n            }\\n            label {\\n                id\\n                title\\n            }\\n            availability\\n            artistTemplate\\n        }\\n        hasFlac\\n    }\\n}\\n"}'
+    local body = '{"operationName":"GetTracks","variables":{"isFlacDRM":false,"ids":[' .. id .. ']},"query":"query GetTracks($ids: [ID!]!) {\\n    getTracks(ids: $ids) {\\n        id\\n        title\\n        searchTitle\\n        position\\n        duration\\n        availability\\n        artistTemplate\\n        condition\\n        explicit\\n        lyrics\\n        zchan\\n        hasFlac\\n        artists {\\n            id\\n            title\\n            image {\\n                src\\n                palette\\n                paletteBottom\\n            }\\n        }\\n        release {\\n            id\\n            title\\n            image {\\n                src\\n                palette\\n                paletteBottom\\n            }\\n        }\\n    }\\n}\\n"}'
     local tab1 = _send_request(session, 'post', address, body, header)
+
+    local _table = tab1.data.getTracks[1].artists
+    local artists = {}
+    for i=1, #_table, 1 do
+        table.insert(artists, _table[i].title)
+    end
+    local artist = table.concat(artists, ", ")
 
     local address = 'https://zvuk.com/api/v1/graphql'
     local body = '{"operationName":"getStream","variables":{"isFlacDRM":false,"ids":[' .. id .. ']},"query":"query getStream($ids: [ID!]!, $isFlacDRM: Boolean = false) {\\n  mediaContents(ids: $ids) {\\n    ... on Track {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n        flacdrm @include(if: $isFlacDRM)\\n      }\\n    }\\n    ... on Episode {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n    ... on Chapter {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n  }\\n}\\n"}'
     local tab2 = _send_request(session, 'post', address, body, header)
 
-    m_simpleTV.Control.CurrentTitle_UTF8 = tab1.data.getTracks[1].title
+    m_simpleTV.Control.CurrentTitle_UTF8 = artist .. " - " .. tab1.data.getTracks[1].title
     m_simpleTV.Control.CurrentAddress = tab2.data.mediaContents[1].stream.mid .. '$OPT:no-gnutls-system-trust'
 end
 
