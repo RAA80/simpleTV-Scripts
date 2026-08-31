@@ -27,7 +27,7 @@ m_simpleTV.Http.SetTimeout(session, 20000)
 
 ------------------------------- Settings --------------------------------------
 
-local token = nil   -- "your token" or nil for default
+local token = nil   -- "your token" or nil
 
 -------------------------------------------------------------------------------
 
@@ -92,7 +92,7 @@ local function _get_discography(id, header)
 
     local _table = tab.result.ids[id]
     local logo = 'https://cdn-image.zvuk.com/pic?id='.. id .. '&size=large&type=artist'     --tab.result.artists[id].image.src
-    local name = ""
+    local name = "Discography"
 
     local address = 'https://zvuk.com/api/tiny/releases?ids=' .. _get_artist(_table)
     local tab = _send_request(session, 'get', address, nil, header)
@@ -162,7 +162,6 @@ local function _get_track(id, header)
     end
     local artist = table.concat(artists, ", ")
 
-    local address = 'https://zvuk.com/api/v1/graphql'
     local body = '{"operationName":"getStream","variables":{"isFlacDRM":false,"ids":[' .. id .. ']},"query":"query getStream($ids: [ID!]!, $isFlacDRM: Boolean = false) {\\n  mediaContents(ids: $ids) {\\n    ... on Track {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n        flacdrm @include(if: $isFlacDRM)\\n      }\\n    }\\n    ... on Episode {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n    ... on Chapter {\\n      stream {\\n        expire\\n        expireDelta\\n        high\\n        mid\\n      }\\n    }\\n  }\\n}\\n"}'
     local tab2 = _send_request(session, 'post', address, body, header)
 
