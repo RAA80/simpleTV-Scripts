@@ -1,4 +1,4 @@
--- script for zvuk.com (30/08/2026)
+-- script for zvuk.com (01/09/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://zvuk.com/track/66985389
@@ -110,8 +110,8 @@ local function _get_discography(id, header)
         i = i + 1
     end
 
-    local _, idx = _show_select(logo, name, list, 3)
-    return m_simpleTV.Control.PlayAddressT({address=list[idx].Address})
+    local _, idx = m_simpleTV.OSD.ShowSelect_UTF8(name, 0, list, 10000, 3)
+    return m_simpleTV.Control.PlayAddressT({address=list[idx or 1].Address})
 end
 
 local function _get_album(id, header)
