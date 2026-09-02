@@ -1,8 +1,8 @@
--- script for ok.ru (15/06/2025)
+-- script for ok.ru (02/09/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://ok.ru/video/23276948199
--- example: https://ok.ru/live/73364
+--          https://ok.ru/video/230273326594
 
 
 if m_simpleTV.Control.ChangeAddress ~= 'No' then return end
@@ -37,7 +37,7 @@ local str = string.match(answer, 'data%-options%="(.-)" data%-player%-container%
 str = htmlEntities.decode(str)
 
 local data = json.decode(str)
-local metadata = json.decode(data.flashvars.metadata)
+local metadata = data.flashvars.metadata
 
 local title = metadata.movie.title
 local url = metadata.hlsManifestUrl or metadata.hlsMasterPlaylistUrl or

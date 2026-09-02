@@ -91,7 +91,7 @@ local function _get_discography(id, header)
     local tab = _send_request(session, 'get', address, nil, header)
 
     local _table = tab.result.ids[id]
-    local logo = 'https://cdn-image.zvuk.com/pic?id='.. id .. '&size=large&type=artist'     --tab.result.artists[id].image.src
+    local logo = 'https://cdn-image.zvuk.com/pic?id='.. id .. '&size=large&type=artist'
     local name = "Discography"
 
     local address = 'https://zvuk.com/api/tiny/releases?ids=' .. _get_artist(_table)
