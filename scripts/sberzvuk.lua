@@ -1,4 +1,4 @@
--- script for zvuk.com (01/09/2026)
+-- script for zvuk.com (18/09/2026)
 -- https://github.com/RAA80/simpleTV-Scripts
 
 -- example: https://zvuk.com/track/66985389
@@ -105,7 +105,7 @@ local function _get_discography(id, header)
         local type_ = value.type
 
         list[i] = {Id = i,
-                   Name = type_ .. ": " .. title .. " (" .. date .. ")",
+                   Name = "(" .. date .. ") " .. type_ .. ": " .. title,
                    Address = 'https://zvuk.com/release/' .. value.id}
         i = i + 1
     end
